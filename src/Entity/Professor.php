@@ -22,6 +22,13 @@ class Professor
     #[ORM\Column]
     private ?bool $status = null;
 
+    #[ORM\OneToOne(mappedBy: 'professor', cascade: ['persist', 'remove'])]
+    private ?StudentClass $studentClass = null;
+
+    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Address $address = null;
+
 
     public function getId(): ?int
     {
@@ -60,6 +67,35 @@ class Professor
     public function setStatus(bool $status): self
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getStudentClass(): ?StudentClass
+    {
+        return $this->studentClass;
+    }
+
+    public function setStudentClass(StudentClass $studentClass): self
+    {
+        // set the owning side of the relation if necessary
+        if ($studentClass->getProfessor() !== $this) {
+            $studentClass->setProfessor($this);
+        }
+
+        $this->studentClass = $studentClass;
+
+        return $this;
+    }
+
+    public function getAddress(): ?Address
+    {
+        return $this->address;
+    }
+
+    public function setAddress(Address $address): self
+    {
+        $this->address = $address;
 
         return $this;
     }

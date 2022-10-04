@@ -22,6 +22,10 @@ class Note
     #[ORM\Column]
     private ?bool $status = null;
 
+    #[ORM\ManyToOne(inversedBy: 'notes')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Student $student = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -59,6 +63,18 @@ class Note
     public function setStatus(bool $status): self
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getStudent(): ?Student
+    {
+        return $this->student;
+    }
+
+    public function setStudent(?Student $student): self
+    {
+        $this->student = $student;
 
         return $this;
     }
