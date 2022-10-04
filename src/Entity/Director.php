@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\DirectorRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: DirectorRepository::class)]
@@ -24,6 +26,18 @@ class Director
 
     #[ORM\Column]
     private ?bool $status = null;
+
+    #[ORM\OneToMany(mappedBy: 'director', targetEntity: School::class)]
+    private Collection $schools;
+
+    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Address $address = null;
+
+    public function __construct()
+    {
+        $this->schools = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -74,6 +88,48 @@ class Director
     public function setStatus(bool $status): self
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, School>
+     */
+    public function getSchools(): Collection
+    {
+        return $this->schools;
+    }
+
+    public function addSchool(School $school): self
+    {
+        if (!$this->schools->contains($school)) {
+            $this->schools->add($school);
+            $school->setDirector($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSchool(School $school): self
+    {
+        if ($this->schools->removeElement($school)) {
+            // set the owning side to null (unless already changed)
+            if ($school->getDirector() === $this) {
+                $school->setDirector(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getAddress(): ?Address
+    {
+        return $this->address;
+    }
+
+    public function setAddress(Address $address): self
+    {
+        $this->address = $address;
 
         return $this;
     }
