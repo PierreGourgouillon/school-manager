@@ -2,11 +2,13 @@
 
 namespace App\Entity;
 
-use App\Repository\StudentRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use App\Entity\Note;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\StudentRepository;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: StudentRepository::class)]
 class Student
@@ -27,6 +29,7 @@ class Student
 
     #[ORM\Column(length: 255)]
     #[Groups(["getAllStudents", "getStudent"])]
+    #[Assert\Email(message: "The email '{{ value }}' is not a valid email")]
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
@@ -42,7 +45,7 @@ class Student
     private ?bool $status = null;
 
     #[ORM\ManyToOne(inversedBy: 'students')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     #[Groups(["getStudent"])]
     private ?StudentClass $studentClass = null;
 

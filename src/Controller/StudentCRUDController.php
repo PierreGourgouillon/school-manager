@@ -3,14 +3,17 @@
 namespace App\Controller;
 
 use App\Entity\Student;
-use App\Form\StudentType;
+use App\Repository\StudentClassRepository;
 use App\Repository\StudentRepository;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Doctrine\ORM\EntityManagerInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/students')]
 class StudentCRUDController extends AbstractController
@@ -24,10 +27,45 @@ class StudentCRUDController extends AbstractController
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/create', name: 'app_student_crud_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, StudentRepository $repository): JsonResponse
+    #[Route('/create', name: 'app_student_crud_new', methods: ['POST'])]
+    public function new(Request $request, StudentClassRepository $studentClassRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager, ValidatorInterface $validator): Response
     {
+        $bodyResponse = $request->toArray();
+        $newStudent = $serializer->deserialize(
+            $request->getContent(),
+            Student::class,
+            'json'
+        );
+        $studentClass = $studentClassRepository->find(['id' => $bodyResponse['studentClass']]);
 
+        $errors = $validator->validate($newStudent);
+        if ($errors->count() > 0) {
+            return new JsonResponse([
+                'code' => Response::HTTP_BAD_REQUEST,
+                'message' => $errors[0]->getMessage()
+            ], Response::HTTP_NOT_FOUND, []);
+            
+            
+            return new JsonResponse($serializer->serialize($errors, "json"), Response::HTTP_BAD_REQUEST, [], true);
+        }
+
+        if (!$studentClass) {
+            return new JsonResponse([
+                'code' => Response::HTTP_NOT_FOUND,
+                'message' => "The student class doesn't exist"
+            ], Response::HTTP_NOT_FOUND, []);
+        }
+
+        $student = $serializer->deserialize($request->getContent(), Student::class, 'json', []);
+        $student->setStudentClass($studentClass);
+        
+        $entityManager->persist($student);
+        $entityManager->flush();
+
+        return new JsonResponse([
+            'code' => Response::HTTP_CREATED,
+            'message' => "The student has been created"
+        ], Response::HTTP_CREATED, []);
     }
 
     #[Route('/{id}', name: 'app_student_crud_show', methods: ['GET'])]
@@ -44,9 +82,18 @@ class StudentCRUDController extends AbstractController
 
     }
 
-    #[Route('/{id}/delete', name: 'app_student_crud_delete', methods: ['POST'])]
-    public function delete(Request $request, Student $student, StudentRepository $repository): JsonResponse
+    #[Route('/{id_student}/delete', name: 'app_student_crud_delete', methods: ['DELETE'])]
+    #[ParamConverter('student', options: ['id' => 'id_student'])]
+    public function delete(Student $student, EntityManagerInterface $entityManager): JsonResponse
     {
+        $student->setStatus(false);
+        $entityManager->persist($student);
+        $entityManager->flush();
+
         
+        return new JsonResponse([
+            'code' => Response::HTTP_OK,
+            'message' => "The entity is delete"
+        ], Response::HTTP_OK, []);
     }
 }
