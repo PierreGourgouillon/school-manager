@@ -2,8 +2,9 @@
 
 namespace App\Entity;
 
-use App\Repository\ProfessorRepository;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\ProfessorRepository;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ProfessorRepository::class)]
 class Professor
@@ -20,6 +21,7 @@ class Professor
     private ?string $subject = null;
 
     #[ORM\Column]
+    #[Groups(["status"])]
     private ?bool $status = null;
 
     #[ORM\OneToOne(mappedBy: 'professor', cascade: ['persist', 'remove'])]

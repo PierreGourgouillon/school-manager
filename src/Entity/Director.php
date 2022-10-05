@@ -25,6 +25,7 @@ class Director
     private ?int $number = null;
 
     #[ORM\Column]
+    #[Groups(["status"])]
     private ?bool $status = null;
 
     #[ORM\OneToMany(mappedBy: 'director', targetEntity: School::class)]
