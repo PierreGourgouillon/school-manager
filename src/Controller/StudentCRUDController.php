@@ -21,7 +21,7 @@ class StudentCRUDController extends AbstractController
     #[Route('/', name: 'app_student_crud_index', methods: ['GET'])]
     public function index(StudentRepository $repository, SerializerInterface $serializer): JsonResponse
     {
-        $students = $repository->findAll();
+        $students = $repository->findAllValidEvents();
         $studentsSerialize = $serializer->serialize($students, 'json', ['groups' => ['getAllStudents', "status"]]);
 
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
@@ -71,15 +71,60 @@ class StudentCRUDController extends AbstractController
     #[Route('/{id}', name: 'app_student_crud_show', methods: ['GET'])]
     public function show(Student $student, SerializerInterface $serializer): JsonResponse
     {
+        if (!$student->isStatus()) {
+            return new JsonResponse([
+                'code' => Response::HTTP_NOT_FOUND,
+                'message' => "The student doesn't exist"
+            ], Response::HTTP_NOT_FOUND, []);
+        }
+
        $studentsSerialize = $serializer->serialize($student, 'json', ['groups' => ['getStudent', "status"]]);
 
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
 
     #[Route('/{id}/edit', name: 'app_student_crud_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Student $student, StudentRepository $repository): JsonResponse
+    public function edit(Request $request, Student $student, StudentRepository $repository, EntityManagerInterface $entityManager,  SerializerInterface $serializer): JsonResponse
     {
+        if (!$student->isStatus()) {
+            return new JsonResponse([
+                'code' => Response::HTTP_NOT_FOUND,
+                'message' => "The student doesn't exist"
+            ], Response::HTTP_NOT_FOUND, []);
+        }
 
+        $bodyResponse = $request->toArray();
+        if (array_key_exists('name', $bodyResponse)) {
+            $student->setName($bodyResponse['name']);
+        }
+
+        if (array_key_exists('email', $bodyResponse)) {
+            $student->setEmail($bodyResponse['email']);
+        }
+
+        if (array_key_exists('age', $bodyResponse)) {
+            $student->setAge($bodyResponse['age']);
+        }
+
+        if (array_key_exists('gender', $bodyResponse)) {
+            $student->setGender($bodyResponse['gender']);
+        }
+
+        if (array_key_exists('handicap', $bodyResponse)) {
+            $student->setHandicap($bodyResponse['handicap']);
+        }
+
+        if (array_key_exists('address', $bodyResponse)) {
+            $student->setAddress($bodyResponse['address']);
+        }
+
+        $entityManager->persist($student);
+        $entityManager->flush();
+
+        $newStudent = $repository->findOneBy(['id' => $student->getId()]);
+        $studentsSerialize = $serializer->serialize($newStudent, 'json', ['groups' => ['getStudent', "status"]]);
+
+       return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
 
     #[Route('/{id_student}/delete', name: 'app_student_crud_delete', methods: ['DELETE'])]
@@ -88,9 +133,9 @@ class StudentCRUDController extends AbstractController
     {
         $student->setStatus(false);
         $entityManager->persist($student);
+
         $entityManager->flush();
 
-        
         return new JsonResponse([
             'code' => Response::HTTP_OK,
             'message' => "The entity is delete"

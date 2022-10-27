@@ -39,6 +39,13 @@ class StudentRepository extends ServiceEntityRepository
         }
     }
 
+    public function findAllValidEvents(): array {
+        return $this->createQueryBuilder("sc")
+        ->andWhere('sc.status = true')
+        ->getQuery()
+        ->getResult();
+    }
+
 //    /**
 //     * @return Student[] Returns an array of Student objects
 //     */
