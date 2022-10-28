@@ -2,10 +2,11 @@
 
 namespace App\Entity;
 
-use App\Repository\SchoolRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\SchoolRepository;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: SchoolRepository::class)]
 class School
@@ -22,6 +23,7 @@ class School
     private ?string $email = null;
 
     #[ORM\Column]
+    #[Groups(["status"])]
     private ?bool $status = null;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]

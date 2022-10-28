@@ -2,10 +2,11 @@
 
 namespace App\Entity;
 
-use App\Repository\StudentClassRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\StudentClassRepository;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: StudentClassRepository::class)]
 class StudentClass
@@ -13,15 +14,19 @@ class StudentClass
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["getStudent"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(["getStudent"])]
     private ?string $graduation = null;
 
     #[ORM\Column]
+    #[Groups(["getStudent"])]
     private ?int $number = null;
 
     #[ORM\Column]
+    #[Groups(["status"])]
     private ?bool $status = null;
 
     #[ORM\ManyToOne(inversedBy: 'studentClasses')]
