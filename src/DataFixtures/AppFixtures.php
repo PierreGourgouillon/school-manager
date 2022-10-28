@@ -12,10 +12,8 @@ use App\Entity\Student;
 use App\Entity\Director;
 use App\Entity\Professor;
 use App\Entity\StudentClass;
-use App\Entity\User;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class AppFixtures extends Fixture
 {
@@ -27,20 +25,13 @@ class AppFixtures extends Fixture
      */
     private Generator $faker;
 
-    /**
-     * Classe Hashant le password
-     * 
-     * @var UserPasswordHasherInterface
-     */
-    private $userPasswordHasher;
-
-    public function __construct(UserPasswordHasherInterface $userPasswordHasher){
+    public function __construct(){
         $this->faker = Factory::create('fr_FR');
-        $this->userPasswordHasher = $userPasswordHasher;
     }
 
     public function load(ObjectManager $manager): void
     {
+
         $addresses = [];
         for ($i = 0; $i < 10000; $i++) {
             $address = new Address();
@@ -128,20 +119,6 @@ class AppFixtures extends Fixture
         foreach($notes as $note){
             $manager->persist($note);
         }
-
-        for ($i = 0; $i < 10; $i++) {
-            $user = new User();
-            $user->setUserName($this->faker->userName)
-            ->setPassword("password");
-            
-            $manager->persist($user);
-        }
-
-        $admin = new User();
-        $admin->setUserName("admin")
-        ->setPassword("password")
-        ->setRoles(["ROLE_ADMIN]"]);
-        $manager->persist($admin);
 
         $manager->persist($director);
         $manager->persist($school);
