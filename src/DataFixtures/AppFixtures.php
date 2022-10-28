@@ -120,6 +120,21 @@ class AppFixtures extends Fixture
             $manager->persist($note);
         }
 
+        for ($i = 0; $i < 10; $i++) {
+            $user = new User();
+            $user->setUserName($this->faker->userName)
+            ->setRoles(["ROLE_USER"])
+            ->setPassword($this->userPasswordHasher->hashPassword($user, "password"));
+            
+            $manager->persist($user);
+        }
+
+        $admin = new User();
+        $admin->setUserName("admin")
+        ->setRoles(["ROLE_ADMIN"])
+        ->setPassword($this->userPasswordHasher->hashPassword($admin, "password"));
+        $manager->persist($admin);
+
         $manager->persist($director);
         $manager->persist($school);
         $manager->flush();
