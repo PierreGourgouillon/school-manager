@@ -12,7 +12,7 @@ class Address
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getStudent"])]
+    #[Groups(["getStudent", "getAllSchools"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]

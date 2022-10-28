@@ -14,7 +14,7 @@ class StudentClass
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getStudent"])]
+    #[Groups(["getAllSchools", "getStudent"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]

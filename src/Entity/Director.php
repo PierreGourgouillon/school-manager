@@ -2,10 +2,11 @@
 
 namespace App\Entity;
 
-use App\Repository\DirectorRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\DirectorRepository;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: DirectorRepository::class)]
 class Director
@@ -13,6 +14,7 @@ class Director
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["getAllSchools"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
