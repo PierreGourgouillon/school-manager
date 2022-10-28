@@ -3,13 +3,11 @@
 namespace App\Controller;
 
 use App\Entity\School;
-use App\Form\SchoolType;
 use App\Entity\StudentClass;
 use App\Repository\SchoolRepository;
 use App\Repository\AddressRepository;
 use App\Repository\DirectorRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use App\Repository\StudentClassRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
