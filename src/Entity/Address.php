@@ -12,23 +12,23 @@ class Address
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getStudent", "getAllSchools"])]
+    #[Groups(["getStudent", "getAllSchools", "getSchool"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["getStudent"])]
+    #[Groups(["getStudent", "getSchool"])]
     private ?string $street = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["getStudent"])]
+    #[Groups(["getStudent", "getSchool"])]
     private ?string $city = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["getStudent"])]
+    #[Groups(["getStudent", "getSchool"])]
     private ?string $postalcode = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["getStudent"])]
+    #[Groups(["getStudent", "getSchool"])]
     private ?string $country = null;
 
     #[ORM\Column]

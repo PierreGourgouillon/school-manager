@@ -46,11 +46,17 @@ class SchoolCRUDController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_school_show', methods: ['GET'])]
-    public function show(School $school): Response
+    public function show(School $school, SerializerInterface $serializer): JsonResponse
     {
-        return $this->render('school/show.html.twig', [
-            'school' => $school,
-        ]);
+        if (!$school->isStatus()) {
+            return new JsonResponse([
+                'code' => Response::HTTP_NOT_FOUND,
+                'message' => "The school doesn't exist"
+            ], Response::HTTP_NOT_FOUND, []);
+        }
+        $schoolSerialize = $serializer->serialize($school, 'json', ['groups' => ['getSchool', "status"]]);
+
+        return new JsonResponse($schoolSerialize, Response::HTTP_OK, [], true);
     }
 
     #[Route('/{id}/edit', name: 'app_school_edit', methods: ['GET', 'POST'])]
