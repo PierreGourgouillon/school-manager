@@ -125,7 +125,7 @@ class SchoolCRUDController extends AbstractController
     #[Route('/{id_school}/studentClass/{id_class}', name: 'app_school_add_studentClass', methods: ['DELETE'])]
     #[ParamConverter('school', options: ['id' => 'id_school'])]
     #[ParamConverter('studentClass', options: ['id' => 'id_class'])]
-    public function deleteStudentClass(School $school, SchoolRepository $schoolRepository, StudentClass $studentClass, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse {
+    public function deleteStudentClass(School $school, StudentClass $studentClass, EntityManagerInterface $entityManager): JsonResponse {
         if (!$school->isStatus()) {
             return new JsonResponse([
                 'code' => Response::HTTP_NOT_FOUND,
@@ -143,31 +143,25 @@ class SchoolCRUDController extends AbstractController
         ], Response::HTTP_ACCEPTED, []);
     }
 
-    #[Route('/{id}/edit', name: 'app_school_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, School $school, SchoolRepository $schoolRepository): Response
-    {
-        $form = $this->createForm(SchoolType::class, $school);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $schoolRepository->save($school, true);
-
-            return $this->redirectToRoute('app_school_index', [], Response::HTTP_SEE_OTHER);
-        }
-
-        return $this->renderForm('school/edit.html.twig', [
-            'school' => $school,
-            'form' => $form,
-        ]);
-    }
-
     #[Route('/{id_school}', name: 'app_school_delete', methods: ['DELETE'])]
     #[ParamConverter('school', options: ['id' => 'id_school'])]
-    public function delete(School $school, EntityManagerInterface $entityManager): JsonResponse
+    public function deleteStatus(School $school, EntityManagerInterface $entityManager): JsonResponse
     {
         $school->setStatus(false);
         $entityManager->persist($school);
+        $entityManager->flush();
 
+        return new JsonResponse([
+            'code' => Response::HTTP_OK,
+            'message' => "The school is delete"
+        ], Response::HTTP_OK, []);
+    }
+
+    #[Route('/{id_school}/delete', name: 'app_school_delete', methods: ['DELETE'])]
+    #[ParamConverter('school', options: ['id' => 'id_school'])]
+    public function delete(School $school, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $entityManager->remove($school);
         $entityManager->flush();
 
         return new JsonResponse([
