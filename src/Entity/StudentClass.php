@@ -14,15 +14,15 @@ class StudentClass
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getStudent"])]
+    #[Groups(["getAllSchools", "getStudent", "getSchool"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["getStudent"])]
+    #[Groups(["getStudent", "getSchool"])]
     private ?string $graduation = null;
 
     #[ORM\Column]
-    #[Groups(["getStudent"])]
+    #[Groups(["getStudent", "getSchool"])]
     private ?int $number = null;
 
     #[ORM\Column]

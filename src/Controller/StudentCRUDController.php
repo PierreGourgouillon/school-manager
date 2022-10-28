@@ -127,13 +127,27 @@ class StudentCRUDController extends AbstractController
        return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/{id_student}/delete', name: 'app_student_crud_delete', methods: ['DELETE'])]
+    #[Route('/{id_student}', name: 'app_student_crud_delete', methods: ['DELETE'])]
     #[ParamConverter('student', options: ['id' => 'id_student'])]
-    public function delete(Student $student, EntityManagerInterface $entityManager): JsonResponse
+    public function deleteStatus(Student $student, EntityManagerInterface $entityManager): JsonResponse
     {
         $student->setStatus(false);
         $entityManager->persist($student);
 
+        $entityManager->flush();
+
+        return new JsonResponse([
+            'code' => Response::HTTP_OK,
+            'message' => "The entity is delete"
+        ], Response::HTTP_OK, []);
+    }
+
+    #[Route('/{id_student}/delete', name: 'app_student_crud_delete', methods: ['DELETE'])]
+    #[ParamConverter('student', options: ['id' => 'id_student'])]
+    public function delete(Student $student, EntityManagerInterface $entityManager): JsonResponse
+    {
+
+        $entityManager->remove($student);
         $entityManager->flush();
 
         return new JsonResponse([

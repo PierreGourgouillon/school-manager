@@ -39,6 +39,14 @@ class SchoolRepository extends ServiceEntityRepository
         }
     }
 
+
+    public function findAllValidSchools(): array {
+        return $this->createQueryBuilder("sc")
+        ->andWhere('sc.status = true')
+        ->getQuery()
+        ->getResult();
+    }
+
 //    /**
 //     * @return School[] Returns an array of School objects
 //     */

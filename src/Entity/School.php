@@ -14,12 +14,15 @@ class School
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["getAllSchools", "getSchool"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(["getAllSchools", "getSchool"])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(["getAllSchools", "getSchool"])]
     private ?string $email = null;
 
     #[ORM\Column]
@@ -28,13 +31,16 @@ class School
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(["getAllSchools", "getSchool"])]
     private ?Address $address = null;
 
     #[ORM\ManyToOne(inversedBy: 'schools')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(["getAllSchools", "getSchool"])]
     private ?Director $director = null;
 
     #[ORM\OneToMany(mappedBy: 'school', targetEntity: StudentClass::class)]
+    #[Groups(["getAllSchools", "getSchool"])]
     private Collection $studentClasses;
 
     public function __construct()
