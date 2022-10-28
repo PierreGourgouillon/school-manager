@@ -4,13 +4,18 @@ namespace App\Controller;
 
 use App\Entity\School;
 use App\Form\SchoolType;
+use App\Entity\StudentClass;
 use App\Repository\SchoolRepository;
+use App\Repository\AddressRepository;
+use App\Repository\DirectorRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Repository\StudentClassRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
@@ -27,22 +32,52 @@ class SchoolCRUDController extends AbstractController
     }
 
     #[Route('/new', name: 'app_school_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, SchoolRepository $schoolRepository): Response
+    public function new(Request $request, AddressRepository $addressRepository, DirectorRepository $directorRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager, ValidatorInterface $validator): JsonResponse
     {
-        $school = new School();
-        $form = $this->createForm(SchoolType::class, $school);
-        $form->handleRequest($request);
+        $bodyResponse = $request->toArray();
+        $newSchool = $serializer->deserialize(
+            $request->getContent(),
+            School::class,
+            'json'
+        );
+        $address = $addressRepository->find(['id' => $bodyResponse['address_id']]);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $schoolRepository->save($school, true);
-
-            return $this->redirectToRoute('app_school_index', [], Response::HTTP_SEE_OTHER);
+        if (!$address) {
+            return new JsonResponse([
+                'code' => Response::HTTP_NOT_FOUND,
+                'message' => "The address_id value doesn't exist"
+            ], Response::HTTP_NOT_FOUND, []);
         }
 
-        return $this->renderForm('school/new.html.twig', [
-            'school' => $school,
-            'form' => $form,
-        ]);
+        $newSchool->setAddress($address);
+
+        $director = $directorRepository->find(['id' => $bodyResponse['director_id']]);
+
+        if (!$director) {
+            return new JsonResponse([
+                'code' => Response::HTTP_NOT_FOUND,
+                'message' => "The director_id value doesn't exist"
+            ], Response::HTTP_NOT_FOUND, []);
+        }
+
+        $newSchool->setDirector($director);
+
+        $errors = $validator->validate($newSchool);
+        if ($errors->count() > 0) {
+            return new JsonResponse([
+                'code' => Response::HTTP_BAD_REQUEST,
+                'message' => $errors[0]->getMessage()
+            ], Response::HTTP_NOT_FOUND, []);
+        }
+        
+        $newSchool->setStatus(true);
+        $entityManager->persist($newSchool);
+        $entityManager->flush();
+
+        return new JsonResponse([
+            'code' => Response::HTTP_CREATED,
+            'message' => "The school has been created"
+        ], Response::HTTP_CREATED, []);
     }
 
     #[Route('/{id}', name: 'app_school_show', methods: ['GET'])]
@@ -57,6 +92,55 @@ class SchoolCRUDController extends AbstractController
         $schoolSerialize = $serializer->serialize($school, 'json', ['groups' => ['getSchool', "status"]]);
 
         return new JsonResponse($schoolSerialize, Response::HTTP_OK, [], true);
+    }
+
+    #[Route('/{id_school}/studentClass/{id_class}', name: 'app_school_add_studentClass', methods: ['POST'])]
+    #[ParamConverter('school', options: ['id' => 'id_school'])]
+    #[ParamConverter('studentClass', options: ['id' => 'id_class'])]
+    public function addStudentClass(School $school, SchoolRepository $schoolRepository, StudentClass $studentClass, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse {
+        if (!$school->isStatus()) {
+            return new JsonResponse([
+                'code' => Response::HTTP_NOT_FOUND,
+                'message' => "The school doesn't exist"
+            ], Response::HTTP_NOT_FOUND, []);
+        }
+
+        if (!$studentClass->isStatus()) {
+            return new JsonResponse([
+                'code' => Response::HTTP_NOT_FOUND,
+                'message' => "The studentClass doesn't exist"
+            ], Response::HTTP_NOT_FOUND, []);
+        }
+
+        $school->addStudentClass($studentClass);
+        $entityManager->persist($school);
+        $entityManager->flush();
+
+        $newSchool = $schoolRepository->findOneBy(['id' => $school->getId()]);
+        $studentsSerialize = $serializer->serialize($newSchool, 'json', ['groups' => ['getSchool', "status"]]);
+
+        return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
+    }
+
+    #[Route('/{id_school}/studentClass/{id_class}', name: 'app_school_add_studentClass', methods: ['DELETE'])]
+    #[ParamConverter('school', options: ['id' => 'id_school'])]
+    #[ParamConverter('studentClass', options: ['id' => 'id_class'])]
+    public function deleteStudentClass(School $school, SchoolRepository $schoolRepository, StudentClass $studentClass, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse {
+        if (!$school->isStatus()) {
+            return new JsonResponse([
+                'code' => Response::HTTP_NOT_FOUND,
+                'message' => "The school doesn't exist"
+            ], Response::HTTP_NOT_FOUND, []);
+        }
+
+        $studentClass->setStatus(false);
+        $entityManager->persist($studentClass);
+        $entityManager->flush();
+
+        return new JsonResponse([
+            'code' => Response::HTTP_CREATED,
+            'message' => "The class has been delete"
+        ], Response::HTTP_ACCEPTED, []);
     }
 
     #[Route('/{id}/edit', name: 'app_school_edit', methods: ['GET', 'POST'])]
