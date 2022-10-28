@@ -15,7 +15,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-#[Route('/students')]
+#[Route('api/students')]
 class StudentCRUDController extends AbstractController
 {
     #[Route('/', name: 'app_student_crud_index', methods: ['GET'])]

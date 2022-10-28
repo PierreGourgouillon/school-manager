@@ -17,7 +17,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
-#[Route('/schools')]
+#[Route('api/schools')]
 class SchoolCRUDController extends AbstractController
 {
     #[Route('/', name: 'app_school_index', methods: ['GET'])]
