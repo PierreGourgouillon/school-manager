@@ -16,11 +16,24 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Annotation\Model;
 
 #[Route('api/schools')]
 class SchoolCRUDController extends AbstractController
 {
+    /**
+     * Récupérer toutes les écoles
+     */
     #[Route('/', name: 'app_school_index', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: "Retourne un tableau des écoles",
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: School::class, groups: ['getAllSchools', "status"]))
+        )
+    )]
     public function index(SchoolRepository $schoolRepository, SerializerInterface $serializer): JsonResponse
     {
         $schools = $schoolRepository->findAllValidSchools();
@@ -29,7 +42,18 @@ class SchoolCRUDController extends AbstractController
         return new JsonResponse($schoolSerialize, Response::HTTP_OK, [], true);
     }
 
+
+
+
+
+    /**
+     * Créer une école
+     */
     #[Route('/new', name: 'app_school_new', methods: ['GET', 'POST'])]
+    #[OA\Response(
+        response: 200,
+        description: "Retourne 200"
+    )]
     public function new(Request $request, AddressRepository $addressRepository, DirectorRepository $directorRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager, ValidatorInterface $validator): JsonResponse
     {
         $bodyResponse = $request->toArray();
@@ -78,7 +102,19 @@ class SchoolCRUDController extends AbstractController
         ], Response::HTTP_CREATED, []);
     }
 
+
+
+
+
+    /**
+     * Récupérer une école
+     */
     #[Route('/{id}', name: 'app_school_show', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: "Retourne l'école",
+        content: new Model(type: School::class, groups: ['getSchool', "status"])
+    )]
     public function show(School $school, SerializerInterface $serializer): JsonResponse
     {
         if (!$school->isStatus()) {
@@ -92,9 +128,20 @@ class SchoolCRUDController extends AbstractController
         return new JsonResponse($schoolSerialize, Response::HTTP_OK, [], true);
     }
 
+
+
+
+    /**
+     * Ajouter une classe à une école
+     */
     #[Route('/{id_school}/studentClass/{id_class}', name: 'app_school_add_studentClass', methods: ['POST'])]
     #[ParamConverter('school', options: ['id' => 'id_school'])]
     #[ParamConverter('studentClass', options: ['id' => 'id_class'])]
+    #[OA\Response(
+        response: 200,
+        description: "Retourne l'école",
+        content: new Model(type: School::class, groups: ['getSchool', "status"])
+    )]
     public function addStudentClass(School $school, SchoolRepository $schoolRepository, StudentClass $studentClass, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse {
         if (!$school->isStatus()) {
             return new JsonResponse([
@@ -120,9 +167,19 @@ class SchoolCRUDController extends AbstractController
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/{id_school}/studentClass/{id_class}', name: 'app_school_add_studentClass', methods: ['DELETE'])]
+
+
+
+    /**
+     * Supprimer une classe à une école
+     */
+    #[Route('/{id_school}/studentClass/{id_class}', name: 'app_school_delete_studentClass', methods: ['DELETE'])]
     #[ParamConverter('school', options: ['id' => 'id_school'])]
     #[ParamConverter('studentClass', options: ['id' => 'id_class'])]
+    #[OA\Response(
+        response: 200,
+        description: "L'école a été supprimée",
+    )]
     public function deleteStudentClass(School $school, StudentClass $studentClass, EntityManagerInterface $entityManager): JsonResponse {
         if (!$school->isStatus()) {
             return new JsonResponse([
@@ -141,8 +198,19 @@ class SchoolCRUDController extends AbstractController
         ], Response::HTTP_ACCEPTED, []);
     }
 
+
+
+
+
+    /**
+     * Supprimer une école (status = false)
+     */
     #[Route('/{id_school}', name: 'app_school_delete', methods: ['DELETE'])]
     #[ParamConverter('school', options: ['id' => 'id_school'])]
+    #[OA\Response(
+        response: 200,
+        description: "Retourne 200"
+    )]
     public function deleteStatus(School $school, EntityManagerInterface $entityManager): JsonResponse
     {
         $school->setStatus(false);
@@ -155,8 +223,19 @@ class SchoolCRUDController extends AbstractController
         ], Response::HTTP_OK, []);
     }
 
-    #[Route('/{id_school}/delete', name: 'app_school_delete', methods: ['DELETE'])]
+
+
+
+
+    /**
+     * Supprimer une école définitivement
+     */
+    #[Route('/{id_school}/delete', name: 'app_school_delete_definitely', methods: ['DELETE'])]
     #[ParamConverter('school', options: ['id' => 'id_school'])]
+    #[OA\Response(
+        response: 200,
+        description: "Retourne 200"
+    )]
     public function delete(School $school, EntityManagerInterface $entityManager): JsonResponse
     {
         $entityManager->remove($school);

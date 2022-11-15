@@ -3,26 +3,32 @@
 namespace App\Controller;
 
 use App\Entity\Note;
-use App\Form\NoteType;
 use App\Entity\Student;
-use App\Repository\NoteRepository;
 use App\Repository\StudentRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Annotation\Model;
 
 #[Route('api/notes')]
 class NoteController extends AbstractController
 {
-
+    /**
+     * Ajouter une note à un étudiant
+     */
     #[Route('/{id_note}/students/{id_student}', name: 'app_student_add_note', methods: ['POST'])]
     #[ParamConverter('student', options: ['id' => 'id_student'])]
     #[ParamConverter('note', options: ['id' => 'id_note'])]
+    #[OA\Response(
+        response: 200,
+        description: "Retourne l'utilisateur avec la note ajoutée",
+        content: new Model(type: Student::class, groups: ['getStudent', "status"])
+    )]
     public function addNoteToUser(Student $student, StudentRepository $repository, Note $note, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
     {
         if (!$student || $student->isStatus() === false) {

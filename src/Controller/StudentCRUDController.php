@@ -14,11 +14,24 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Doctrine\ORM\EntityManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Annotation\Model;
 
 #[Route('api/students')]
 class StudentCRUDController extends AbstractController
 {
+    /**
+     * Récupérer tous les étudiants
+     */
     #[Route('/', name: 'app_student_crud_index', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: "Retourne le tableau avec tous les étudiants",
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Student::class, groups: ['getAllStudents', "status"]))
+        )
+    )]
     public function index(StudentRepository $repository, SerializerInterface $serializer): JsonResponse
     {
         $students = $repository->findAllValidEvents();
@@ -27,7 +40,18 @@ class StudentCRUDController extends AbstractController
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
 
+
+
+
+
+    /**
+     * Créer un étudiant
+     */
     #[Route('/create', name: 'app_student_crud_new', methods: ['POST'])]
+    #[OA\Response(
+        response: 201,
+        description: "L'étudiant a bien été créé"
+    )]
     public function new(Request $request, StudentClassRepository $studentClassRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager, ValidatorInterface $validator): Response
     {
         $bodyResponse = $request->toArray();
@@ -68,7 +92,19 @@ class StudentCRUDController extends AbstractController
         ], Response::HTTP_CREATED, []);
     }
 
+
+
+
+
+    /**
+     * Récupérer un étudiant
+     */
     #[Route('/{id}', name: 'app_student_crud_show', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: "Retourne l'étudiant",
+        content: new Model(type: Student::class, groups: ['getStudent', "status"])
+    )]
     public function show(Student $student, SerializerInterface $serializer): JsonResponse
     {
         if (!$student->isStatus()) {
@@ -83,7 +119,19 @@ class StudentCRUDController extends AbstractController
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/{id}/edit', name: 'app_student_crud_edit', methods: ['GET', 'POST'])]
+
+
+
+
+    /**
+     * Modifier un étudiant
+     */
+    #[Route('/{id}/edit', name: 'app_student_crud_edit', methods: ['POST'])]
+    #[OA\Response(
+        response: 200,
+        description: "Retourne l'étudiant modifié",
+        content: new Model(type: Student::class, groups: ['getStudent', "status"])
+    )]
     public function edit(Request $request, Student $student, StudentRepository $repository, EntityManagerInterface $entityManager,  SerializerInterface $serializer): JsonResponse
     {
         if (!$student->isStatus()) {
@@ -127,8 +175,19 @@ class StudentCRUDController extends AbstractController
        return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
 
+
+
+
+
+    /**
+     * Supprimer un étudiant (status = false)
+     */
     #[Route('/{id_student}', name: 'app_student_crud_delete', methods: ['DELETE'])]
     #[ParamConverter('student', options: ['id' => 'id_student'])]
+    #[OA\Response(
+        response: 200,
+        description: "Supprime l'étudiant"
+    )]
     public function deleteStatus(Student $student, EntityManagerInterface $entityManager): JsonResponse
     {
         $student->setStatus(false);
@@ -142,8 +201,18 @@ class StudentCRUDController extends AbstractController
         ], Response::HTTP_OK, []);
     }
 
-    #[Route('/{id_student}/delete', name: 'app_student_crud_delete', methods: ['DELETE'])]
+
+
+
+    /**
+     * Supprimer un étudiant définitivement
+    */
+    #[Route('/{id_student}/delete', name: 'app_student_crud_delete_definitely', methods: ['DELETE'])]
     #[ParamConverter('student', options: ['id' => 'id_student'])]
+    #[OA\Response(
+        response: 200,
+        description: "Supprime l'étudiant"
+    )]
     public function delete(Student $student, EntityManagerInterface $entityManager): JsonResponse
     {
 
