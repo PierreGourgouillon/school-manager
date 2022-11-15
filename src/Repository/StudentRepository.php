@@ -3,8 +3,10 @@
 namespace App\Repository;
 
 use App\Entity\Student;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use App\Repository\AbstractRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\EntityRepository\QueryBuilder;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**
  * @extends ServiceEntityRepository<Student>
@@ -39,12 +41,10 @@ class StudentRepository extends ServiceEntityRepository
         }
     }
 
-    public function findAllValidEvents(): array {
-        return $this->createQueryBuilder("sc")
-        ->andWhere('sc.status = true')
-        ->getQuery()
-        ->getResult();
+    public function getAllStudents(bool $status = true): array {
+        return $this->withStatus($status, $this->createQueryBuilder('s'))->getQuery()->getResult();
     }
+
 
 //    /**
 //     * @return Student[] Returns an array of Student objects
