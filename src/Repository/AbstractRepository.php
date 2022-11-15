@@ -12,6 +12,6 @@ abstract class AbstractRepository extends ServiceEntityRepository
         if(!$qb) {
             $qb = new ORMQueryBuilder($this->getEntityManager());
         }
-        return $qb->andWhere("status = :status")->setParameter('status', $status);
+        return $qb->andWhere("s.status = :status")->setParameter('status', $status);
     }
 }
