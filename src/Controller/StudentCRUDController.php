@@ -34,7 +34,7 @@ class StudentCRUDController extends AbstractController
     )]
     public function index(StudentRepository $repository, SerializerInterface $serializer): JsonResponse
     {
-        $students = $repository->findAllValidEvents();
+        $students = $repository->getAllStudents();
         $studentsSerialize = $serializer->serialize($students, 'json', ['groups' => ['getAllStudents', "status"]]);
 
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);

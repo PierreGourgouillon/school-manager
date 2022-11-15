@@ -16,7 +16,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
  * @method Student[]    findAll()
  * @method Student[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class StudentRepository extends ServiceEntityRepository
+class StudentRepository extends AbstractRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
@@ -44,7 +44,6 @@ class StudentRepository extends ServiceEntityRepository
     public function getAllStudents(bool $status = true): array {
         return $this->withStatus($status, $this->createQueryBuilder('s'))->getQuery()->getResult();
     }
-
 
 //    /**
 //     * @return Student[] Returns an array of Student objects
