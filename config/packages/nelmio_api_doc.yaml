@@ -2,8 +2,8 @@ nelmio_api_doc:
   models: { use_jms: false }
   documentation:
     info:
-      title: School MAnager
-      description: This is an awesome API REST for BileMo!
+      title: School Manager
+      description: Manipulez votre école comme il se doit !
       version: 1.0.0
     components:
       securitySchemes:

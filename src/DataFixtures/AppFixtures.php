@@ -5,6 +5,7 @@ namespace App\DataFixtures;
 use Faker;
 use Faker\Factory;
 use App\Entity\Note;
+use App\Entity\User;
 use Faker\Generator;
 use App\Entity\School;
 use App\Entity\Address;
@@ -14,6 +15,7 @@ use App\Entity\Professor;
 use App\Entity\StudentClass;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class AppFixtures extends Fixture
 {
@@ -25,13 +27,20 @@ class AppFixtures extends Fixture
      */
     private Generator $faker;
 
-    public function __construct(){
+        /**
+     * Classe Hashant le password
+     * 
+     * @var UserPasswordHasherInterface
+     */
+    private $userPasswordHasher;
+
+    public function __construct(UserPasswordHasherInterface $userPasswordHasher){
         $this->faker = Factory::create('fr_FR');
+        $this->userPasswordHasher = $userPasswordHasher;
     }
 
     public function load(ObjectManager $manager): void
     {
-
         $addresses = [];
         for ($i = 0; $i < 10000; $i++) {
             $address = new Address();
@@ -120,19 +129,20 @@ class AppFixtures extends Fixture
             $manager->persist($note);
         }
 
-        for ($i = 0; $i < 10; $i++) {
-            $user = new User();
-            $user->setUserName($this->faker->userName)
-            ->setRoles(["ROLE_USER"])
-            ->setPassword($this->userPasswordHasher->hashPassword($user, "password"));
+        // for ($i = 0; $i < 10; $i++) {
+        //     $user = new User();
+        //     $user->setUserName($this->faker->userName)
+        //     ->setRoles(["ROLE_USER"])
+        //     ->setPassword($this->userPasswordHasher->hashPassword($user, "password"));
             
-            $manager->persist($user);
-        }
+        //     $manager->persist($user);
+        // }
 
         $admin = new User();
         $admin->setUserName("admin")
         ->setRoles(["ROLE_ADMIN"])
-        ->setPassword($this->userPasswordHasher->hashPassword($admin, "password"));
+        //->setPassword($this->userPasswordHasher->hashPassword($admin, "password"));
+        ->setPassword("password");
         $manager->persist($admin);
 
         $manager->persist($director);

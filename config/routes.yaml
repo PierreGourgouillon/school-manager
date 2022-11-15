@@ -1,3 +1,10 @@
 controllers:
     resource: ../src/Controller/
-    type: attribute
+    type: annotation
+
+kernel:
+    resource: ../src/kernel.php
+    type: annotation
+    
+api_login_check:
+    path: /api/login_check
