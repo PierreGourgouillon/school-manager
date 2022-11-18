@@ -74,7 +74,7 @@ class AppFixtures extends Fixture
 
         $manager->persist($user);
         $professors = [];
-        for ($i = 0; $i < 100; $i++) {
+        for ($i = 0; $i < 10; $i++) {
             $professor = new Professor();
             $user = $this->createUser();
             $professor->setAddress($this->faker->randomElement($addresses))
@@ -96,7 +96,7 @@ class AppFixtures extends Fixture
         ->setStatus(true);
 
         $studentsClasses = [];
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < 50; $i++) {
             $studentClass = new StudentClass();
             $studentClass->setGraduation($this->faker->randomElement(['6', '5', '4', '3', '2']))
             ->setNumber($this->faker->randomDigit)
@@ -109,7 +109,7 @@ class AppFixtures extends Fixture
         }
 
         $students = array();
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < 20; $i++) {
             $student = new Student();
             $user = $this->createUser();
             $student->setName($this->faker->firstName())
@@ -128,7 +128,7 @@ class AppFixtures extends Fixture
         }
 
         $notes = [];
-        for ($i = 0; $i < 20; $i++) {
+        for ($i = 0; $i < 30; $i++) {
             $note = new Note();
             $note->setValue($this->faker->randomFloat(2, 0, 20))
             ->setSubject($this->faker->randomElement(['Maths', 'Francais', 'Sport', 'Anglais', 'Histoire']))
