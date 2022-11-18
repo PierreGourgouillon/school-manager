@@ -39,32 +39,45 @@ class ProfessorRepository extends AbstractRepository
         }
     }
 
-    public function getAllProfessors(bool $status = true): array {
+    public function getAllProfessors(bool $status = true): array
+    {
         return $this->withStatus($status, $this->createQueryBuilder('s'))->getQuery()->getResult();
     }
 
-//    /**
-//     * @return Professor[] Returns an array of Professor objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('p')
-//            ->andWhere('p.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('p.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    public function findProfessorsBySubject(bool $status = true, $value): array
+    {
+        return  $this->withStatus(
+            $status,
+            $this->createQueryBuilder('s')
+                ->andWhere('s.subject = :searchTerm')
+                ->setParameter('searchTerm', $value)
+        )
+            ->getQuery()
+            ->getResult();
+    }
 
-//    public function findOneBySomeField($value): ?Professor
-//    {
-//        return $this->createQueryBuilder('p')
-//            ->andWhere('p.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    //    /**
+    //     * @return Professor[] Returns an array of Professor objects
+    //     */
+    //    public function findByExampleField($value): array
+    //    {
+    //        return $this->createQueryBuilder('p')
+    //            ->andWhere('p.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->orderBy('p.id', 'ASC')
+    //            ->setMaxResults(10)
+    //            ->getQuery()
+    //            ->getResult()
+    //        ;
+    //    }
+
+    //    public function findOneBySomeField($value): ?Professor
+    //    {
+    //        return $this->createQueryBuilder('p')
+    //            ->andWhere('p.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->getQuery()
+    //            ->getOneOrNullResult()
+    //        ;
+    //    }
 }

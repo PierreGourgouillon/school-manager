@@ -29,11 +29,12 @@ class Professor
     private ?bool $status = null;
 
     #[ORM\OneToOne(mappedBy: 'professor', cascade: ['persist', 'remove'])]
+    #[Groups(["getAllProfessors", "getProfessor"])]
     private ?StudentClass $studentClass = null;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(["getStudent"])]
+    #[Groups(["getAllProfessors", "getProfessor"])]
     private ?Address $address = null;
 
 

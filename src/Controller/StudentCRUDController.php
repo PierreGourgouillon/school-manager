@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Student;
+use App\Entity\StudentClass;
 use OpenApi\Attributes as OA;
 use App\Repository\StudentRepository;
 use JMS\Serializer\SerializerInterface;
@@ -19,6 +20,7 @@ use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 #[Route('api/students')]
 class StudentCRUDController extends AbstractController
@@ -51,14 +53,34 @@ class StudentCRUDController extends AbstractController
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
 
+    /**
+     * Récupère tous les étudiants d'une classe
+     */
+    #[Route('/{class_id}/filter', name: 'app_student_crud_filter', methods: ['GET'])]
+    #[ParamConverter('studentClass', options: ['id' => 'class_id'])]
+    #[OA\Response(
+        response: 200,
+        description: "Retourne les étudiants d'une même classe",
+        content: new Model(type: Student::class, groups: ['getStudent', "status"])
+    )]
+    public function Filter(
+        StudentClass $studentClass,
+        StudentRepository $studentRepository,
+        SerializerInterface $serializer): JsonResponse
+    {
+        $newList = $studentRepository->findBy(['studentClass' => $studentClass->getId()]);
+        $context = SerializationContext::create()->setGroups(['getStudent', "status"]);
+        $studentsSerialize = $serializer->serialize($newList, 'json', $context);
 
-
+        return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
+    }
 
 
     /**
      * Créer un étudiant
      */
     #[Route('/create', name: 'app_student_crud_new', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 201,
         description: "L'étudiant a bien été créé"
@@ -102,7 +124,7 @@ class StudentCRUDController extends AbstractController
         $entityManager->persist($student);
         $entityManager->flush();
 
-        $cache->invalidateTags(["allStudentsCache"]);
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
 
         return new JsonResponse([
             'code' => Response::HTTP_CREATED,
@@ -117,13 +139,16 @@ class StudentCRUDController extends AbstractController
     /**
      * Récupérer un étudiant
      */
-    #[Route('/{id}', name: 'app_student_crud_show', methods: ['GET'])]
+    #[Route('/{id_student}', name: 'app_student_crud_show', methods: ['GET'])]
+    #[ParamConverter('student', options: ['id' => 'id_student'])]
     #[OA\Response(
         response: 200,
         description: "Retourne l'étudiant",
         content: new Model(type: Student::class, groups: ['getStudent', "status"])
     )]
-    public function show(Student $student, SerializerInterface $serializer): JsonResponse
+    public function show(
+        Student $student,
+        SerializerInterface $serializer): JsonResponse
     {
         if (!$student->isStatus()) {
             return new JsonResponse([
@@ -138,14 +163,12 @@ class StudentCRUDController extends AbstractController
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
 
-
-
-
-
     /**
      * Modifier un étudiant
      */
-    #[Route('/{id}/edit', name: 'app_student_crud_edit', methods: ['POST'])]
+    #[Route('/{id_student}/edit', name: 'app_student_crud_edit', methods: ['POST'])]
+    #[ParamConverter('student', options: ['id' => 'id_student'])]
+    #[IsGranted('ROLE_ADMIN')]
     #[OA\Response(
         response: 200,
         description: "Retourne l'étudiant modifié",
@@ -198,55 +221,53 @@ class StudentCRUDController extends AbstractController
         $context = SerializationContext::create()->setGroups(['getStudent', 'status']);
         $studentsSerialize = $serializer->serialize($newStudent, 'json', $context);
         
-        $cache->invalidateTags(["allStudentsCache"]);
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
 
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
-
-
-
-
 
     /**
      * Supprimer un étudiant (status = false)
      */
     #[Route('/{id_student}', name: 'app_student_crud_delete', methods: ['DELETE'])]
     #[ParamConverter('student', options: ['id' => 'id_student'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 200,
         description: "Supprime l'étudiant"
     )]
-    public function deleteStatus(Student $student, EntityManagerInterface $entityManager): JsonResponse
+    public function deleteStatus(Student $student, EntityManagerInterface $entityManager, TagAwareCacheInterface $cache): JsonResponse
     {
         $student->setStatus(false);
         $entityManager->persist($student);
 
         $entityManager->flush();
 
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_OK,
             'message' => "The entity is delete"
         ], Response::HTTP_OK, []);
     }
 
-
-
-
     /**
      * Supprimer un étudiant définitivement
     */
     #[Route('/{id_student}/delete', name: 'app_student_crud_delete_definitely', methods: ['DELETE'])]
     #[ParamConverter('student', options: ['id' => 'id_student'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 200,
         description: "Supprime l'étudiant"
     )]
-    public function delete(Student $student, EntityManagerInterface $entityManager): JsonResponse
+    public function delete(
+        Student $student,
+        EntityManagerInterface $entityManager): JsonResponse
     {
-
         $entityManager->remove($student);
         $entityManager->flush();
 
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_OK,
             'message' => "The entity is delete"
