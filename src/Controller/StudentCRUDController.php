@@ -19,6 +19,7 @@ use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 #[Route('api/students')]
 class StudentCRUDController extends AbstractController
@@ -59,6 +60,7 @@ class StudentCRUDController extends AbstractController
      * Créer un étudiant
      */
     #[Route('/create', name: 'app_student_crud_new', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 201,
         description: "L'étudiant a bien été créé"
@@ -117,13 +119,16 @@ class StudentCRUDController extends AbstractController
     /**
      * Récupérer un étudiant
      */
-    #[Route('/{id}', name: 'app_student_crud_show', methods: ['GET'])]
+    #[Route('/{id_student}', name: 'app_student_crud_show', methods: ['GET'])]
+    #[ParamConverter('student', options: ['id' => 'id_student'])]
     #[OA\Response(
         response: 200,
         description: "Retourne l'étudiant",
         content: new Model(type: Student::class, groups: ['getStudent', "status"])
     )]
-    public function show(Student $student, SerializerInterface $serializer): JsonResponse
+    public function show(
+        Student $student,
+        SerializerInterface $serializer): JsonResponse
     {
         if (!$student->isStatus()) {
             return new JsonResponse([
@@ -145,7 +150,9 @@ class StudentCRUDController extends AbstractController
     /**
      * Modifier un étudiant
      */
-    #[Route('/{id}/edit', name: 'app_student_crud_edit', methods: ['POST'])]
+    #[Route('/{id_student}/edit', name: 'app_student_crud_edit', methods: ['POST'])]
+    #[ParamConverter('student', options: ['id' => 'id_student'])]
+    #[IsGranted('ROLE_ADMIN')]
     #[OA\Response(
         response: 200,
         description: "Retourne l'étudiant modifié",
@@ -212,6 +219,7 @@ class StudentCRUDController extends AbstractController
      */
     #[Route('/{id_student}', name: 'app_student_crud_delete', methods: ['DELETE'])]
     #[ParamConverter('student', options: ['id' => 'id_student'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 200,
         description: "Supprime l'étudiant"
@@ -237,13 +245,15 @@ class StudentCRUDController extends AbstractController
     */
     #[Route('/{id_student}/delete', name: 'app_student_crud_delete_definitely', methods: ['DELETE'])]
     #[ParamConverter('student', options: ['id' => 'id_student'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 200,
         description: "Supprime l'étudiant"
     )]
-    public function delete(Student $student, EntityManagerInterface $entityManager): JsonResponse
+    public function delete(
+        Student $student,
+        EntityManagerInterface $entityManager): JsonResponse
     {
-
         $entityManager->remove($student);
         $entityManager->flush();
 

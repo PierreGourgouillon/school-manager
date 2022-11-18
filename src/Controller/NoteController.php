@@ -13,6 +13,7 @@ use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
@@ -25,10 +26,11 @@ class NoteController extends AbstractController
     #[Route('/{id_note}/students/{id_student}', name: 'app_student_add_note', methods: ['POST'])]
     #[ParamConverter('student', options: ['id' => 'id_student'])]
     #[ParamConverter('note', options: ['id' => 'id_note'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 200,
         description: "Retourne l'utilisateur avec la note ajoutée",
-        content: new Model(type: Student::class, groups: ['getStudent', "status"])
+        content: new Model(type: Student::class, groups: ['getStudent'])
     )]
     public function addNoteToUser(
         Student $student,
