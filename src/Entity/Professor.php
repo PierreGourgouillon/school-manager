@@ -4,7 +4,8 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\ProfessorRepository;
-use Symfony\Component\Serializer\Annotation\Groups;
+use JMS\Serializer\Annotation\Groups;
+
 
 #[ORM\Entity(repositoryClass: ProfessorRepository::class)]
 class Professor
@@ -12,12 +13,15 @@ class Professor
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["getAllProfessors",  "getProfessor"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(["getAllProfessors", "getProfessor"])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(["getAllProfessors", "getProfessor"])]
     private ?string $subject = null;
 
     #[ORM\Column]
@@ -29,6 +33,7 @@ class Professor
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(["getStudent"])]
     private ?Address $address = null;
 
 
