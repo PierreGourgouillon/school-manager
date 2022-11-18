@@ -211,6 +211,7 @@ class ProfessorCRUDController extends AbstractController
         description: "Supprime le professeur"
     )]
     public function deleteStatus(
+        TagAwareCacheInterface $cache,
         Professor $professor,
         EntityManagerInterface $entityManager): JsonResponse
     {
@@ -239,8 +240,10 @@ class ProfessorCRUDController extends AbstractController
         description: "Supprime le professeur"
     )]
     public function delete(
+        TagAwareCacheInterface $cache,
         Professor $professor,
         EntityManagerInterface $entityManager): JsonResponse
+
     {
 
         $entityManager->remove($professor);
