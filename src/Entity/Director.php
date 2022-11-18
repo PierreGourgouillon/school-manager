@@ -18,15 +18,15 @@ class Director
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["getSchool"])]
+    #[Groups(["getSchool", "getDirector"])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["getSchool"])]
+    #[Groups(["getSchool", "getDirector"])]
     private ?string $email = null;
 
     #[ORM\Column]
-    #[Groups(["getSchool"])]
+    #[Groups(["getSchool", "getDirector"])]
     private ?int $number = null;
 
     #[ORM\Column]
@@ -39,6 +39,9 @@ class Director
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Address $address = null;
+
+    #[ORM\OneToOne(inversedBy: 'director', cascade: ['persist', 'remove'])]
+    private ?User $user = null;
 
     public function __construct()
     {
@@ -136,6 +139,18 @@ class Director
     public function setAddress(Address $address): self
     {
         $this->address = $address;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }

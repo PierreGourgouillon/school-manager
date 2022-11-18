@@ -262,7 +262,7 @@ class StudentCRUDController extends AbstractController
     )]
     public function delete(
         Student $student,
-        EntityManagerInterface $entityManager): JsonResponse
+        EntityManagerInterface $entityManager, TagAwareCacheInterface $cache): JsonResponse
     {
         $entityManager->remove($student);
         $entityManager->flush();

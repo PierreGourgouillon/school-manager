@@ -39,6 +39,15 @@ class AppFixtures extends Fixture
         $this->userPasswordHasher = $userPasswordHasher;
     }
 
+    private function createUser(): User {
+        $user = new User();
+            $user->setUserName($this->faker->userName)
+            ->setRoles(["ROLE_USER"])
+            ->setPassword($this->userPasswordHasher->hashPassword($user, "password"));
+            
+        return $user;
+    }
+
     public function load(ObjectManager $manager): void
     {
         $addresses = [];
@@ -55,21 +64,27 @@ class AppFixtures extends Fixture
         }
 
         $director = new Director();
+        $user = $this->createUser();
         $director->setAddress($this->faker->randomElement($addresses))
         ->setEmail($this->faker->email)
         ->setName($this->faker->name)
         ->setNumber(1)
+        ->setUser($user)
         ->setStatus(true);
 
+        $manager->persist($user);
         $professors = [];
         for ($i = 0; $i < 100; $i++) {
             $professor = new Professor();
+            $user = $this->createUser();
             $professor->setAddress($this->faker->randomElement($addresses))
             ->setName($this->faker->name)
             ->setSubject($this->faker->randomElement(['Maths', 'Francais', 'Sport', 'Anglais', 'Histoire']))
-            ->setStatus(true);
+            ->setStatus(true)
+            ->setUser($user);
 
             $manager->persist($professor);
+            $manager->persist($user);
             array_push($professors, $professor);
         }
 
@@ -96,6 +111,7 @@ class AppFixtures extends Fixture
         $students = array();
         for ($i = 0; $i < 10; $i++) {
             $student = new Student();
+            $user = $this->createUser();
             $student->setName($this->faker->firstName())
             ->setEmail($this->faker->email())
             ->setAge(10)
@@ -103,8 +119,11 @@ class AppFixtures extends Fixture
             ->setStatus(true)
             ->setAddress($this->faker->randomElement($addresses))
             ->setStudentClass($this->faker->randomElement($studentsClasses))
-            ->setHandicap(false);
+            ->setHandicap(false)
+            ->setUser($user);
+            
 
+            $manager->persist($user);
             array_push($students, $student);
         }
 
@@ -129,15 +148,6 @@ class AppFixtures extends Fixture
             $manager->persist($note);
         }
 
-        for ($i = 0; $i < 10; $i++) {
-            $user = new User();
-            $user->setUserName($this->faker->userName)
-            ->setRoles(["ROLE_USER"])
-            ->setPassword($this->userPasswordHasher->hashPassword($user, "password"));
-            
-            $manager->persist($user);
-        }
-
         $admin = new User();
         $admin->setUserName("admin")
         ->setRoles(["ROLE_ADMIN"])
@@ -148,4 +158,6 @@ class AppFixtures extends Fixture
         $manager->persist($school);
         $manager->flush();
     }
+
+   
 }
