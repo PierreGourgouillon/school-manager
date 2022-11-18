@@ -17,6 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
@@ -54,6 +55,7 @@ class SchoolCRUDController extends AbstractController
      * Créer une école
      */
     #[Route('/new', name: 'app_school_new', methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 200,
         description: "Retourne 200"
@@ -151,6 +153,7 @@ class SchoolCRUDController extends AbstractController
     #[Route('/{id_school}/studentClass/{id_class}', name: 'app_school_add_studentClass', methods: ['POST'])]
     #[ParamConverter('school', options: ['id' => 'id_school'])]
     #[ParamConverter('studentClass', options: ['id' => 'id_class'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 200,
         description: "Retourne l'école",
@@ -197,6 +200,7 @@ class SchoolCRUDController extends AbstractController
     #[Route('/{id_school}/studentClass/{id_class}', name: 'app_school_delete_studentClass', methods: ['DELETE'])]
     #[ParamConverter('school', options: ['id' => 'id_school'])]
     #[ParamConverter('studentClass', options: ['id' => 'id_class'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 200,
         description: "L'école a été supprimée",
@@ -232,6 +236,7 @@ class SchoolCRUDController extends AbstractController
      */
     #[Route('/{id_school}', name: 'app_school_delete', methods: ['DELETE'])]
     #[ParamConverter('school', options: ['id' => 'id_school'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 200,
         description: "Retourne 200"
@@ -259,6 +264,7 @@ class SchoolCRUDController extends AbstractController
      */
     #[Route('/{id_school}/delete', name: 'app_school_delete_definitely', methods: ['DELETE'])]
     #[ParamConverter('school', options: ['id' => 'id_school'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 200,
         description: "Retourne 200"

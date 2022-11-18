@@ -2,33 +2,34 @@
 
 namespace App\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Entity\Professor;
 use OpenApi\Attributes as OA;
+use App\Repository\ProfessorRepository;
 use JMS\Serializer\SerializerInterface;
+use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use Nelmio\ApiDocBundle\Annotation\Model;
+use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Doctrine\ORM\EntityManagerInterface;
-use App\Repository\ProfessorRepository;
-use App\Entity\Professor;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
 #[Route('api/professor')]
 class ProfessorCRUDController extends AbstractController
 {
   /**
-     * Récupérer tous les professors
+     * Récupérer tous les professeurs
      */
-    #[Route('/', name: 'app_Professor_crud_index', methods: ['GET'])]
+    #[Route('/', name: 'app_professor_index', methods: ['GET'])]
     #[OA\Response(
         response: 200,
-        description: "Retourne le tableau avec tous les professeurs",
+        description: "Retourne un tableau avec tous les professeurs",
         content: new OA\JsonContent(
             type: 'array',
             items: new OA\Items(ref: new Model(type: Professor::class, groups: ['getAllProfessors', "status"]))
@@ -59,7 +60,8 @@ class ProfessorCRUDController extends AbstractController
     /**
      * Créer un professeur
      */
-    #[Route('/create', name: 'app_Professor_crud_new', methods: ['POST'])]
+    #[Route('/create', name: 'app_professor_new', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 201,
         description: "Le professeur a bien été créé"
@@ -112,16 +114,19 @@ class ProfessorCRUDController extends AbstractController
     }
 
 
-/**
+    /**
      * Récupérer un professeur
      */
-    #[Route('/{id}', name: 'app_professor_crud_show', methods: ['GET'])]
+    #[Route('/{id_professor}', name: 'app_professor_show', methods: ['GET'])]
+    #[ParamConverter('professor', options: ['id' => 'id_professor'])]
     #[OA\Response(
         response: 200,
         description: "Retourne le professeur",
         content: new Model(type: Professor::class, groups: ['getProfessor', "status"])
     )]
-    public function show(Professor $professor, SerializerInterface $serializer): JsonResponse
+    public function show(
+        Professor $professor,
+        SerializerInterface $serializer): JsonResponse
     {
         if (!$professor->isStatus()) {
             return new JsonResponse([
@@ -143,7 +148,9 @@ class ProfessorCRUDController extends AbstractController
     /**
      * Modifier un professeur
      */
-    #[Route('/{id}/edit', name: 'app_professor_crud_edit', methods: ['POST'])]
+    #[Route('/{id_professor}/edit', name: 'app_professor_edit', methods: ['POST'])]
+    #[ParamConverter('professor', options: ['id' => 'id_professor'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 200,
         description: "Retourne le professeur modifié",
@@ -196,13 +203,16 @@ class ProfessorCRUDController extends AbstractController
     /**
      * Supprimer un professeur (status = false)
      */
-    #[Route('/{id_professor}', name: 'app_professor_crud_delete', methods: ['DELETE'])]
+    #[Route('/{id_professor}', name: 'app_professor_delete', methods: ['DELETE'])]
     #[ParamConverter('professor', options: ['id' => 'id_professor'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 200,
         description: "Supprime le professeur"
     )]
-    public function deleteStatus(Professor $professor, EntityManagerInterface $entityManager): JsonResponse
+    public function deleteStatus(
+        Professor $professor,
+        EntityManagerInterface $entityManager): JsonResponse
     {
         $professor->setStatus(false);
         $entityManager->persist($professor);
@@ -221,13 +231,16 @@ class ProfessorCRUDController extends AbstractController
     /**
      * Supprimer un professor définitivement
     */
-    #[Route('/{id_professor}/delete', name: 'app_professor_crud_delete_definitely', methods: ['DELETE'])]
+    #[Route('/{id_professor}/delete', name: 'app_professor_delete_definitely', methods: ['DELETE'])]
     #[ParamConverter('student', options: ['id' => 'id_professor'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 200,
         description: "Supprime le professeur"
     )]
-    public function delete(Professor $professor, EntityManagerInterface $entityManager): JsonResponse
+    public function delete(
+        Professor $professor,
+        EntityManagerInterface $entityManager): JsonResponse
     {
 
         $entityManager->remove($professor);
