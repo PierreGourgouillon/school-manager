@@ -8,8 +8,8 @@ use OpenApi\Attributes as OA;
 use App\Repository\SchoolRepository;
 use App\Repository\StudentRepository;
 use App\Repository\ProfessorRepository;
-use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use App\Repository\StudentClassRepository;
@@ -22,6 +22,7 @@ use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 #[Route('api/studentClass')]
 class StudentClassController extends AbstractController
@@ -58,6 +59,7 @@ class StudentClassController extends AbstractController
     *   Créer une classe
     */
     #[Route('/new', name: 'app_student_class_create', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 201,
         description: "La classe a été créée",
@@ -129,6 +131,7 @@ class StudentClassController extends AbstractController
     #[Route('/{id_class}/students/{id_student}', name: 'app_student_class_add_user', methods: ['POST'])]
     #[ParamConverter('student', options: ['id' => 'id_student'])]
     #[ParamConverter('studentClass', options: ['id' => 'id_class'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 200,
         description: "Retourne l'utisateur ajouté à la classe",
@@ -161,7 +164,7 @@ class StudentClassController extends AbstractController
         $entityManager->flush();
 
         $newStudent = $studentRepository->findOneBy(['id' => $student->getId()]);
-        $context = SerializationContext::create()->setGroups(['getStudent', "status"]);
+        $context = SerializationContext::create()->setGroups(['getStudent', 'status']);
         $studentsSerialize = $serializer->serialize($newStudent, 'json', $context);
 
         $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
@@ -176,6 +179,7 @@ class StudentClassController extends AbstractController
     */
     #[Route('/{id_class}', name: 'app_student_class_delete_status', methods: ['DELETE'])]
     #[ParamConverter('studentClass', options: ['id' => 'id_class'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
         response: 200,
         description: "La classe a été supprimée",

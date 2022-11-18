@@ -3,8 +3,11 @@
 namespace App\Repository;
 
 use App\Entity\School;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use DateTimeImmutable;
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Query\Parameter;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @extends ServiceEntityRepository<School>
@@ -14,7 +17,7 @@ use Doctrine\Persistence\ManagerRegistry;
  * @method School[]    findAll()
  * @method School[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class SchoolRepository extends ServiceEntityRepository
+class SchoolRepository extends AbstractRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
@@ -39,12 +42,33 @@ class SchoolRepository extends ServiceEntityRepository
         }
     }
 
+    public function getAllSchools(bool $status = true): array {
+        return $this->withStatus($status, $this->createQueryBuilder('s'))->getQuery()->getResult();
+    }
 
-    public function findAllValidSchools(): array {
-        return $this->createQueryBuilder("sc")
-        ->andWhere('sc.status = true')
-        ->getQuery()
-        ->getResult();
+    public function findBetweenDates(DateTimeImmutable $startDate, DateTimeImmutable $endDate, int $page, int $limit) {
+        $startDate = $startDate ? $startDate : new DateTimeImmutable();
+        $qb = $this->createQueryBuilder("s");
+        $qb->add(
+            'where',
+            $qb->expr()->orX(
+                $qb->expr()->andX(
+                    $qb->expr()->gte("s.dateStart", ":startdate"),
+                    $qb->expr()->lte("s.dateStart", ":enddate")
+                ),
+                $qb->expr()->andX(
+                    $qb->expr()->gte("s.dateEnd", ":startdate"),
+                    $qb->expr()->lte("s.dateEnd", ":enddate")
+                )
+            )
+        )->setParameters(
+            new ArrayCollection(
+                [
+                    new Parameter('startdate', $startDate, Types::DATETIME_IMMUTABLE),
+                    new Parameter('enddate', $endDate, Types::DATETIME_IMMUTABLE)
+                ]
+            )
+        );
     }
 
 //    /**

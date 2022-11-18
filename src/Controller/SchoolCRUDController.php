@@ -12,10 +12,12 @@ use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use Nelmio\ApiDocBundle\Annotation\Model;
+use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -37,12 +39,17 @@ class SchoolCRUDController extends AbstractController
         )
     )]
     public function index(
-        SchoolRepository $schoolRepository,
-        SerializerInterface $serializer): JsonResponse
+        SchoolRepository $repository,
+        SerializerInterface $serializer,
+        TagAwareCacheInterface $cache): JsonResponse
     {
-        $schools = $schoolRepository->findAllValidSchools();
-        $context = SerializationContext::create()->setGroups(['getAllSchools', 'status']);
-        $schoolSerialize = $serializer->serialize($schools, 'json', $context);
+        $idCache = "getAllSchools";
+        $schoolSerialize = $cache->get($idCache, function(ItemInterface $item) use ($repository, $serializer) {
+            $item->tag("allSchoolsCache");
+            $school = $repository->getAllSchools();
+            $context = SerializationContext::create()->setGroups(['getAllSchools']);
+            return $serializer->serialize($school, 'json', $context);
+        });
 
         return new JsonResponse($schoolSerialize, Response::HTTP_OK, [], true);
     }
@@ -54,6 +61,7 @@ class SchoolCRUDController extends AbstractController
     /**
      * Créer une école
      */
+
     #[Route('/new', name: 'app_school_new', methods: ['GET', 'POST'])]
     #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droits pour cette action')]
     #[OA\Response(
