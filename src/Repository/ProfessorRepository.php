@@ -3,8 +3,8 @@
 namespace App\Repository;
 
 use App\Entity\Professor;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+
 
 /**
  * @extends ServiceEntityRepository<Professor>
@@ -14,7 +14,7 @@ use Doctrine\Persistence\ManagerRegistry;
  * @method Professor[]    findAll()
  * @method Professor[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class ProfessorRepository extends ServiceEntityRepository
+class ProfessorRepository extends AbstractRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
@@ -37,6 +37,10 @@ class ProfessorRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+    }
+
+    public function getAllProfessors(bool $status = true): array {
+        return $this->withStatus($status, $this->createQueryBuilder('s'))->getQuery()->getResult();
     }
 
 //    /**
