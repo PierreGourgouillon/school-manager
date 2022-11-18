@@ -14,7 +14,7 @@ use Doctrine\Persistence\ManagerRegistry;
  * @method StudentClass[]    findAll()
  * @method StudentClass[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class StudentClassRepository extends ServiceEntityRepository
+class StudentClassRepository extends AbstractRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
@@ -37,6 +37,10 @@ class StudentClassRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+    }
+
+    public function getAllStudentClass(bool $status = true): array {
+        return $this->withStatus($status, $this->createQueryBuilder('s'))->getQuery()->getResult();
     }
 
 //    /**

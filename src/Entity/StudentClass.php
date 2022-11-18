@@ -6,7 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Repository\StudentClassRepository;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\Serializer\Annotation\Groups;
+use JMS\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: StudentClassRepository::class)]
 class StudentClass
@@ -14,15 +14,15 @@ class StudentClass
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getAllSchools", "getStudent", "getSchool"])]
+    #[Groups(["getAllStudentClass" ,"getAllSchools", "getStudent", "getSchool"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["getStudent", "getSchool"])]
+    #[Groups(["getAllStudentClass" ,"getStudent", "getSchool"])]
     private ?string $graduation = null;
 
     #[ORM\Column]
-    #[Groups(["getStudent", "getSchool"])]
+    #[Groups(["getAllStudentClass" ,"getStudent", "getSchool"])]
     private ?int $number = null;
 
     #[ORM\Column]

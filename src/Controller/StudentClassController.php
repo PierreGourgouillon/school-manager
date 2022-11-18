@@ -4,29 +4,61 @@ namespace App\Controller;
 
 use App\Entity\Student;
 use App\Entity\StudentClass;
-use App\Repository\ProfessorRepository;
+use OpenApi\Attributes as OA;
 use App\Repository\SchoolRepository;
 use App\Repository\StudentRepository;
+use App\Repository\ProfessorRepository;
+use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use JMS\Serializer\SerializationContext;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use App\Repository\StudentClassRepository;
+use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use JMS\Serializer\SerializerInterface;
-use JMS\Serializer\SerializationContext;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use OpenApi\Attributes as OA;
-use Nelmio\ApiDocBundle\Annotation\Model;
 
 #[Route('api/studentClass')]
 class StudentClassController extends AbstractController
 {
     /**
+     * Récupérer toutes les classes
+     */
+    #[Route('/', name: 'app_student_class_index', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: "Retourne le tableau avec toutes les classes",
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: StudentClass::class, groups: ['getAllStudentClass', "status"]))
+        )
+    )]
+    public function index(
+        StudentClassRepository $repository,
+        SerializerInterface $serializer,
+        TagAwareCacheInterface $cache): JsonResponse
+    {
+        $cache->invalidateTags(["allStudentClassCache"]);
+        $idCache = "getAllStudentClass";
+        $studentClassSerialize = $cache->get($idCache, function(ItemInterface $item) use ($repository, $serializer) {
+            $item->tag("allStudentClassCache");
+            $studentClass = $repository->getAllStudentClass();
+            $context = SerializationContext::create()->setGroups(['getAllStudentClass']);
+            return $serializer->serialize($studentClass, 'json', $context);
+        });
+
+        return new JsonResponse($studentClassSerialize, Response::HTTP_OK, [], true);
+    }
+
+    /**
     *   Créer une classe
     */
-    #[Route('/studentClass/new', name: 'app_student_class_create', methods: ['POST'])]
+    #[Route('/new', name: 'app_student_class_create', methods: ['POST'])]
     #[OA\Response(
         response: 201,
         description: "La classe a été créée",
@@ -94,7 +126,6 @@ class StudentClassController extends AbstractController
      * Ajouter un utlisateur à une classe
      */
     #[Route('/{id_class}/students/{id_student}', name: 'app_student_class_add_user', methods: ['POST'])]
-    #[Route('/studentClass/{id_class}/students/{id_student}', name: 'app_student_class_add_user', methods: ['POST'])]
     #[ParamConverter('student', options: ['id' => 'id_student'])]
     #[ParamConverter('studentClass', options: ['id' => 'id_class'])]
     #[OA\Response(
@@ -140,7 +171,7 @@ class StudentClassController extends AbstractController
     /**
     *   Supprimer une classe (status = false)
     */
-    #[Route('/studentClass/{id_class}', name: 'app_student_class_delete_status', methods: ['DELETE'])]
+    #[Route('/{id_class}', name: 'app_student_class_delete_status', methods: ['DELETE'])]
     #[ParamConverter('studentClass', options: ['id' => 'id_class'])]
     #[OA\Response(
         response: 200,
