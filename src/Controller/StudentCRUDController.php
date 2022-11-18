@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Student;
+use App\Entity\StudentClass;
 use OpenApi\Attributes as OA;
 use App\Repository\StudentRepository;
 use JMS\Serializer\SerializerInterface;
@@ -52,8 +53,27 @@ class StudentCRUDController extends AbstractController
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
 
+    /**
+     * Récupère tous les étudiants d'une classe
+     */
+    #[Route('/{class_id}/filter', name: 'app_student_crud_filter', methods: ['GET'])]
+    #[ParamConverter('studentClass', options: ['id' => 'class_id'])]
+    #[OA\Response(
+        response: 200,
+        description: "Retourne les étudiants d'une même classe",
+        content: new Model(type: Student::class, groups: ['getStudent', "status"])
+    )]
+    public function Filter(
+        StudentClass $studentClass,
+        StudentRepository $studentRepository,
+        SerializerInterface $serializer): JsonResponse
+    {
+        $newList = $studentRepository->findBy(['studentClass' => $studentClass->getId()]);
+        $context = SerializationContext::create()->setGroups(['getStudent', "status"]);
+        $studentsSerialize = $serializer->serialize($newList, 'json', $context);
 
-
+        return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
+    }
 
 
     /**
@@ -104,7 +124,7 @@ class StudentCRUDController extends AbstractController
         $entityManager->persist($student);
         $entityManager->flush();
 
-        $cache->invalidateTags(["allStudentsCache"]);
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
 
         return new JsonResponse([
             'code' => Response::HTTP_CREATED,
@@ -142,10 +162,6 @@ class StudentCRUDController extends AbstractController
 
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
-
-
-
-
 
     /**
      * Modifier un étudiant
@@ -205,14 +221,10 @@ class StudentCRUDController extends AbstractController
         $context = SerializationContext::create()->setGroups(['getStudent', 'status']);
         $studentsSerialize = $serializer->serialize($newStudent, 'json', $context);
         
-        $cache->invalidateTags(["allStudentsCache"]);
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
 
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
-
-
-
-
 
     /**
      * Supprimer un étudiant (status = false)
@@ -224,21 +236,19 @@ class StudentCRUDController extends AbstractController
         response: 200,
         description: "Supprime l'étudiant"
     )]
-    public function deleteStatus(Student $student, EntityManagerInterface $entityManager): JsonResponse
+    public function deleteStatus(Student $student, EntityManagerInterface $entityManager, TagAwareCacheInterface $cache): JsonResponse
     {
         $student->setStatus(false);
         $entityManager->persist($student);
 
         $entityManager->flush();
 
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_OK,
             'message' => "The entity is delete"
         ], Response::HTTP_OK, []);
     }
-
-
-
 
     /**
      * Supprimer un étudiant définitivement
@@ -257,6 +267,7 @@ class StudentCRUDController extends AbstractController
         $entityManager->remove($student);
         $entityManager->flush();
 
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_OK,
             'message' => "The entity is delete"

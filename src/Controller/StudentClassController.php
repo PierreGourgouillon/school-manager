@@ -43,7 +43,6 @@ class StudentClassController extends AbstractController
         SerializerInterface $serializer,
         TagAwareCacheInterface $cache): JsonResponse
     {
-        $cache->invalidateTags(["allStudentClassCache"]);
         $idCache = "getAllStudentClass";
         $studentClassSerialize = $cache->get($idCache, function(ItemInterface $item) use ($repository, $serializer) {
             $item->tag("allStudentClassCache");
@@ -69,7 +68,8 @@ class StudentClassController extends AbstractController
         SchoolRepository $schoolRepository,
         ProfessorRepository $professorRepository,
         EntityManagerInterface $entityManager,
-        ValidatorInterface $validator): JsonResponse
+        ValidatorInterface $validator,
+        TagAwareCacheInterface $cache): JsonResponse
     {
         $bodyResponse = $request->toArray();
         $newStudentClass = $serializer->deserialize(
@@ -112,6 +112,7 @@ class StudentClassController extends AbstractController
         $entityManager->persist($newStudentClass);
         $entityManager->flush();
 
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_CREATED,
             'message' => "The student class has been created"
@@ -138,7 +139,8 @@ class StudentClassController extends AbstractController
         StudentRepository $studentRepository,
         StudentClass $studentClass,
         SerializerInterface $serializer,
-        EntityManagerInterface $entityManager): JsonResponse
+        EntityManagerInterface $entityManager,
+        TagAwareCacheInterface $cache): JsonResponse
     {
         if (!$studentClass->isStatus()) {
             return new JsonResponse([
@@ -162,6 +164,7 @@ class StudentClassController extends AbstractController
         $context = SerializationContext::create()->setGroups(['getStudent', "status"]);
         $studentsSerialize = $serializer->serialize($newStudent, 'json', $context);
 
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
 
@@ -179,12 +182,14 @@ class StudentClassController extends AbstractController
     )]
     public function deleteStatus(
         StudentClass $studentClass,
-        EntityManagerInterface $entityManager): JsonResponse
+        EntityManagerInterface $entityManager,
+        TagAwareCacheInterface $cache): JsonResponse
     {
         $studentClass->setStatus(false);
         $entityManager->persist($studentClass);
         $entityManager->flush();
 
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_OK,
             'message' => "The student class has been deleted"
