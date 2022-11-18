@@ -38,11 +38,11 @@ class ProfessorCRUDController extends AbstractController
     public function index(
         ProfessorRepository $repository,
         SerializerInterface $serializer,
-        TagAwareCacheInterface $cache): JsonResponse
-    {
+        TagAwareCacheInterface $cache
+    ): JsonResponse {
         $cache->invalidateTags(["allProfessorsCache"]);
         $idCache = "getAllProfessors";
-        $ProfessorsSerialize = $cache->get($idCache, function(ItemInterface $item) use ($repository, $serializer) {
+        $ProfessorsSerialize = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
             $item->tag("allProfessorsCache");
             $Professors = $repository->getAllProfessors();
             $context = SerializationContext::create()->setGroups(['getAllProfessors']);
@@ -72,8 +72,8 @@ class ProfessorCRUDController extends AbstractController
         SerializerInterface $serializer,
         TagAwareCacheInterface $cache,
         EntityManagerInterface $entityManager,
-        ValidatorInterface $validator): Response
-    {
+        ValidatorInterface $validator
+    ): Response {
         $bodyResponse = $request->toArray();
         $newProfessor = $serializer->deserialize(
             $request->getContent(),
@@ -101,7 +101,7 @@ class ProfessorCRUDController extends AbstractController
 
         $Professor = $serializer->deserialize($request->getContent(), Professor::class, 'json');
         $Professor->setProfessorClass($ProfessorClass);
-        
+
         $entityManager->persist($Professor);
         $entityManager->flush();
 
@@ -162,8 +162,8 @@ class ProfessorCRUDController extends AbstractController
         ProfessorRepository $repository,
         EntityManagerInterface $entityManager,
         SerializerInterface $serializer,
-        TagAwareCacheInterface $cache): JsonResponse
-    {
+        TagAwareCacheInterface $cache
+    ): JsonResponse {
         if (!$professor->isStatus()) {
             return new JsonResponse([
                 'code' => Response::HTTP_NOT_FOUND,
@@ -190,7 +190,7 @@ class ProfessorCRUDController extends AbstractController
         $newStudent = $repository->findOneBy(['id' => $professor->getId()]);
         $context = SerializationContext::create()->setGroups(['getProfessor', 'status']);
         $studentsSerialize = $serializer->serialize($newStudent, 'json', $context);
-        
+
         $cache->invalidateTags(["allProfessorsCache"]);
 
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
@@ -218,7 +218,7 @@ class ProfessorCRUDController extends AbstractController
         $entityManager->persist($professor);
 
         $entityManager->flush();
-
+        $cache->invalidateTags(["allProfessorsCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_OK,
             'message' => "The entity is delete"
@@ -245,11 +245,40 @@ class ProfessorCRUDController extends AbstractController
 
         $entityManager->remove($professor);
         $entityManager->flush();
-
+        $cache->invalidateTags(["allProfessorsCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_OK,
             'message' => "The entity is delete"
         ], Response::HTTP_OK, []);
     }
-}
 
+
+
+
+    /**
+     * Trier les professeurs par matières
+     */
+    #[Route('/filter/{subject}', name: 'app_professor_crud_filter_subject', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: "Filtre les professeurs par matières",
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Professor::class, groups: ['getAllProfessors', "status"]))
+        )
+    )]
+    public function filterProfesorBySubject(
+        string $subject,
+        ProfessorRepository $repository,
+        SerializerInterface $serializer,
+    ): JsonResponse {
+        $Professors = $repository->findProfessorsBySubject(true, $subject);
+        $context = SerializationContext::create()->setGroups(['getAllProfessors']);
+
+        $ProfessorsSerialize = $serializer->serialize($Professors, 'json', $context);
+
+
+        return new JsonResponse($ProfessorsSerialize, Response::HTTP_OK, [], true);
+    }
+
+}
