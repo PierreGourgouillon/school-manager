@@ -3,19 +3,22 @@
 namespace App\Controller;
 
 use App\Entity\Student;
-use App\Repository\StudentClassRepository;
+use OpenApi\Attributes as OA;
 use App\Repository\StudentRepository;
+use JMS\Serializer\SerializerInterface;
+use Doctrine\ORM\EntityManagerInterface;
+use JMS\Serializer\SerializationContext;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use App\Repository\StudentClassRepository;
+use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Doctrine\ORM\EntityManagerInterface;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use OpenApi\Attributes as OA;
-use Nelmio\ApiDocBundle\Annotation\Model;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
 #[Route('api/students')]
 class StudentCRUDController extends AbstractController
@@ -32,10 +35,18 @@ class StudentCRUDController extends AbstractController
             items: new OA\Items(ref: new Model(type: Student::class, groups: ['getAllStudents', "status"]))
         )
     )]
-    public function index(StudentRepository $repository, SerializerInterface $serializer): JsonResponse
+    public function index(
+        StudentRepository $repository,
+        SerializerInterface $serializer,
+        TagAwareCacheInterface $cache): JsonResponse
     {
-        $students = $repository->getAllStudents();
-        $studentsSerialize = $serializer->serialize($students, 'json', ['groups' => ['getAllStudents', "status"]]);
+        $idCache = "getAllStudents";
+        $studentsSerialize = $cache->get($idCache, function(ItemInterface $item) use ($repository, $serializer) {
+            $item->tag("allStudentsCache");
+            $students = $repository->getAllStudents();
+            $context = SerializationContext::create()->setGroups(['getAllStudents']);
+            return $serializer->serialize($students, 'json', $context);
+        });
 
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
@@ -52,7 +63,13 @@ class StudentCRUDController extends AbstractController
         response: 201,
         description: "L'étudiant a bien été créé"
     )]
-    public function new(Request $request, StudentClassRepository $studentClassRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager, ValidatorInterface $validator): Response
+    public function new(
+        Request $request,
+        StudentClassRepository $studentClassRepository,
+        SerializerInterface $serializer,
+        TagAwareCacheInterface $cache,
+        EntityManagerInterface $entityManager,
+        ValidatorInterface $validator): Response
     {
         $bodyResponse = $request->toArray();
         $newStudent = $serializer->deserialize(
@@ -68,8 +85,7 @@ class StudentCRUDController extends AbstractController
                 'code' => Response::HTTP_BAD_REQUEST,
                 'message' => $errors[0]->getMessage()
             ], Response::HTTP_NOT_FOUND, []);
-            
-            
+
             return new JsonResponse($serializer->serialize($errors, "json"), Response::HTTP_BAD_REQUEST, [], true);
         }
 
@@ -80,11 +96,13 @@ class StudentCRUDController extends AbstractController
             ], Response::HTTP_NOT_FOUND, []);
         }
 
-        $student = $serializer->deserialize($request->getContent(), Student::class, 'json', []);
+        $student = $serializer->deserialize($request->getContent(), Student::class, 'json');
         $student->setStudentClass($studentClass);
         
         $entityManager->persist($student);
         $entityManager->flush();
+
+        $cache->invalidateTags(["allStudentsCache"]);
 
         return new JsonResponse([
             'code' => Response::HTTP_CREATED,
@@ -114,7 +132,8 @@ class StudentCRUDController extends AbstractController
             ], Response::HTTP_NOT_FOUND, []);
         }
 
-       $studentsSerialize = $serializer->serialize($student, 'json', ['groups' => ['getStudent', "status"]]);
+        $context = SerializationContext::create()->setGroups('getStudent');
+        $studentsSerialize = $serializer->serialize($student, 'json', $context);
 
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
@@ -132,7 +151,13 @@ class StudentCRUDController extends AbstractController
         description: "Retourne l'étudiant modifié",
         content: new Model(type: Student::class, groups: ['getStudent', "status"])
     )]
-    public function edit(Request $request, Student $student, StudentRepository $repository, EntityManagerInterface $entityManager,  SerializerInterface $serializer): JsonResponse
+    public function edit(
+        Request $request,
+        Student $student,
+        StudentRepository $repository,
+        EntityManagerInterface $entityManager,
+        SerializerInterface $serializer,
+        TagAwareCacheInterface $cache): JsonResponse
     {
         if (!$student->isStatus()) {
             return new JsonResponse([
@@ -170,9 +195,12 @@ class StudentCRUDController extends AbstractController
         $entityManager->flush();
 
         $newStudent = $repository->findOneBy(['id' => $student->getId()]);
-        $studentsSerialize = $serializer->serialize($newStudent, 'json', ['groups' => ['getStudent', "status"]]);
+        $context = SerializationContext::create()->setGroups(['getStudent', 'status']);
+        $studentsSerialize = $serializer->serialize($newStudent, 'json', $context);
+        
+        $cache->invalidateTags(["allStudentsCache"]);
 
-       return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
+        return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
 
 

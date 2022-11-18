@@ -4,16 +4,17 @@ namespace App\Controller;
 
 use App\Entity\Note;
 use App\Entity\Student;
+use OpenApi\Attributes as OA;
 use App\Repository\StudentRepository;
+use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use JMS\Serializer\SerializationContext;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use OpenApi\Attributes as OA;
-use Nelmio\ApiDocBundle\Annotation\Model;
 
 #[Route('api/notes')]
 class NoteController extends AbstractController
@@ -29,7 +30,12 @@ class NoteController extends AbstractController
         description: "Retourne l'utilisateur avec la note ajoutée",
         content: new Model(type: Student::class, groups: ['getStudent', "status"])
     )]
-    public function addNoteToUser(Student $student, StudentRepository $repository, Note $note, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
+    public function addNoteToUser(
+        Student $student,
+        StudentRepository $repository,
+        Note $note,
+        SerializerInterface $serializer,
+        EntityManagerInterface $entityManager): JsonResponse
     {
         if (!$student || $student->isStatus() === false) {
             return new JsonResponse([
@@ -50,7 +56,8 @@ class NoteController extends AbstractController
         $entityManager->flush();
 
         $newStudent = $repository->findOneBy(['id' => $student->getId()]);
-        $studentsSerialize = $serializer->serialize($newStudent, 'json', ['groups' => ['getStudent', "status"]]);
+        $context = SerializationContext::create()->setGroups(['getStudent', "status"]);
+        $studentsSerialize = $serializer->serialize($newStudent, 'json', $context);
 
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
