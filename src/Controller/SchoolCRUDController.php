@@ -74,7 +74,7 @@ class SchoolCRUDController extends AbstractController
         DirectorRepository $directorRepository,
         SerializerInterface $serializer,
         EntityManagerInterface $entityManager,
-        ValidatorInterface $validator): JsonResponse
+        ValidatorInterface $validator, TagAwareCacheInterface $cache): JsonResponse
     {
         $bodyResponse = $request->toArray();
         $newSchool = $serializer->deserialize(
@@ -115,7 +115,7 @@ class SchoolCRUDController extends AbstractController
         $newSchool->setStatus(true);
         $entityManager->persist($newSchool);
         $entityManager->flush();
-
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache", "allProfessorsCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_CREATED,
             'message' => "The school has been created"
@@ -216,7 +216,7 @@ class SchoolCRUDController extends AbstractController
     public function deleteStudentClass(
         School $school,
         StudentClass $studentClass,
-        EntityManagerInterface $entityManager): JsonResponse
+        EntityManagerInterface $entityManager,  TagAwareCacheInterface $cache): JsonResponse
     {
         if (!$school->isStatus()) {
             return new JsonResponse([
@@ -228,7 +228,7 @@ class SchoolCRUDController extends AbstractController
         $studentClass->setStatus(false);
         $entityManager->persist($studentClass);
         $entityManager->flush();
-
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache", "allProfessorsCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_CREATED,
             'message' => "The class has been delete"
@@ -251,12 +251,12 @@ class SchoolCRUDController extends AbstractController
     )]
     public function deleteStatus(
         School $school,
-        EntityManagerInterface $entityManager): JsonResponse
+        EntityManagerInterface $entityManager, TagAwareCacheInterface $cache): JsonResponse
     {
         $school->setStatus(false);
         $entityManager->persist($school);
         $entityManager->flush();
-
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache", "allProfessorsCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_OK,
             'message' => "The school is delete"
@@ -277,11 +277,11 @@ class SchoolCRUDController extends AbstractController
         response: 200,
         description: "Retourne 200"
     )]
-    public function delete(School $school, EntityManagerInterface $entityManager): JsonResponse
+    public function delete(School $school, EntityManagerInterface $entityManager, TagAwareCacheInterface $cache): JsonResponse
     {
         $entityManager->remove($school);
         $entityManager->flush();
-
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache", "allProfessorsCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_OK,
             'message' => "The school is delete"
