@@ -4,20 +4,21 @@ namespace App\Controller;
 
 use App\Entity\School;
 use App\Entity\StudentClass;
+use OpenApi\Attributes as OA;
 use App\Repository\SchoolRepository;
 use App\Repository\AddressRepository;
 use App\Repository\DirectorRepository;
+use JMS\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use JMS\Serializer\SerializationContext;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use OpenApi\Attributes as OA;
-use Nelmio\ApiDocBundle\Annotation\Model;
 
 #[Route('api/schools')]
 class SchoolCRUDController extends AbstractController
@@ -34,10 +35,13 @@ class SchoolCRUDController extends AbstractController
             items: new OA\Items(ref: new Model(type: School::class, groups: ['getAllSchools', "status"]))
         )
     )]
-    public function index(SchoolRepository $schoolRepository, SerializerInterface $serializer): JsonResponse
+    public function index(
+        SchoolRepository $schoolRepository,
+        SerializerInterface $serializer): JsonResponse
     {
         $schools = $schoolRepository->findAllValidSchools();
-        $schoolSerialize = $serializer->serialize($schools, 'json', ['groups' => ['getAllSchools', 'status']]);
+        $context = SerializationContext::create()->setGroups(['getAllSchools', 'status']);
+        $schoolSerialize = $serializer->serialize($schools, 'json', $context);
 
         return new JsonResponse($schoolSerialize, Response::HTTP_OK, [], true);
     }
@@ -54,7 +58,13 @@ class SchoolCRUDController extends AbstractController
         response: 200,
         description: "Retourne 200"
     )]
-    public function new(Request $request, AddressRepository $addressRepository, DirectorRepository $directorRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager, ValidatorInterface $validator): JsonResponse
+    public function new(
+        Request $request,
+        AddressRepository $addressRepository,
+        DirectorRepository $directorRepository,
+        SerializerInterface $serializer,
+        EntityManagerInterface $entityManager,
+        ValidatorInterface $validator): JsonResponse
     {
         $bodyResponse = $request->toArray();
         $newSchool = $serializer->deserialize(
@@ -115,7 +125,9 @@ class SchoolCRUDController extends AbstractController
         description: "Retourne l'école",
         content: new Model(type: School::class, groups: ['getSchool', "status"])
     )]
-    public function show(School $school, SerializerInterface $serializer): JsonResponse
+    public function show(
+        School $school,
+        SerializerInterface $serializer): JsonResponse
     {
         if (!$school->isStatus()) {
             return new JsonResponse([
@@ -123,7 +135,9 @@ class SchoolCRUDController extends AbstractController
                 'message' => "The school doesn't exist"
             ], Response::HTTP_NOT_FOUND, []);
         }
-        $schoolSerialize = $serializer->serialize($school, 'json', ['groups' => ['getSchool', "status"]]);
+
+        $context = SerializationContext::create()->setGroups(['getSchool', "status"]);
+        $schoolSerialize = $serializer->serialize($school, 'json', $context);
 
         return new JsonResponse($schoolSerialize, Response::HTTP_OK, [], true);
     }
@@ -142,7 +156,13 @@ class SchoolCRUDController extends AbstractController
         description: "Retourne l'école",
         content: new Model(type: School::class, groups: ['getSchool', "status"])
     )]
-    public function addStudentClass(School $school, SchoolRepository $schoolRepository, StudentClass $studentClass, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse {
+    public function addStudentClass(
+        School $school,
+        SchoolRepository $schoolRepository,
+        StudentClass $studentClass,
+        SerializerInterface $serializer,
+        EntityManagerInterface $entityManager): JsonResponse
+    {
         if (!$school->isStatus()) {
             return new JsonResponse([
                 'code' => Response::HTTP_NOT_FOUND,
@@ -162,9 +182,10 @@ class SchoolCRUDController extends AbstractController
         $entityManager->flush();
 
         $newSchool = $schoolRepository->findOneBy(['id' => $school->getId()]);
-        $studentsSerialize = $serializer->serialize($newSchool, 'json', ['groups' => ['getSchool', "status"]]);
+        $context = SerializationContext::create()->setGroups(['getSchool', "status"]);
+        $schoolSerialize = $serializer->serialize($newSchool, 'json', $context);
 
-        return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
+        return new JsonResponse($schoolSerialize, Response::HTTP_OK, [], true);
     }
 
 
@@ -180,7 +201,11 @@ class SchoolCRUDController extends AbstractController
         response: 200,
         description: "L'école a été supprimée",
     )]
-    public function deleteStudentClass(School $school, StudentClass $studentClass, EntityManagerInterface $entityManager): JsonResponse {
+    public function deleteStudentClass(
+        School $school,
+        StudentClass $studentClass,
+        EntityManagerInterface $entityManager): JsonResponse
+    {
         if (!$school->isStatus()) {
             return new JsonResponse([
                 'code' => Response::HTTP_NOT_FOUND,
@@ -211,7 +236,9 @@ class SchoolCRUDController extends AbstractController
         response: 200,
         description: "Retourne 200"
     )]
-    public function deleteStatus(School $school, EntityManagerInterface $entityManager): JsonResponse
+    public function deleteStatus(
+        School $school,
+        EntityManagerInterface $entityManager): JsonResponse
     {
         $school->setStatus(false);
         $entityManager->persist($school);

@@ -12,7 +12,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Serializer\SerializerInterface;
+use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\SerializationContext;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
@@ -30,7 +31,14 @@ class StudentClassController extends AbstractController
         response: 201,
         description: "La classe a été créée",
     )]
-    public function create(Request $request, SerializerInterface $serializer, SchoolRepository $schoolRepository, ProfessorRepository $professorRepository, EntityManagerInterface $entityManager, ValidatorInterface $validator): JsonResponse {
+    public function create(
+        Request $request,
+        SerializerInterface $serializer,
+        SchoolRepository $schoolRepository,
+        ProfessorRepository $professorRepository,
+        EntityManagerInterface $entityManager,
+        ValidatorInterface $validator): JsonResponse
+    {
         $bodyResponse = $request->toArray();
         $newStudentClass = $serializer->deserialize(
             $request->getContent(),
@@ -94,8 +102,13 @@ class StudentClassController extends AbstractController
         description: "Retourne l'utisateur ajouté à la classe",
         content: new Model(type: Student::class, groups: ['getStudent', "status"])
     )]
-    public function addUser(Student $student, StudentRepository $studentRepository, StudentClass $studentClass, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse {
-
+    public function addUser(
+        Student $student,
+        StudentRepository $studentRepository,
+        StudentClass $studentClass,
+        SerializerInterface $serializer,
+        EntityManagerInterface $entityManager): JsonResponse
+    {
         if (!$studentClass->isStatus()) {
             return new JsonResponse([
                 'status' => 'error',
@@ -115,7 +128,8 @@ class StudentClassController extends AbstractController
         $entityManager->flush();
 
         $newStudent = $studentRepository->findOneBy(['id' => $student->getId()]);
-        $studentsSerialize = $serializer->serialize($newStudent, 'json', ['groups' => ['getStudent', "status"]]);
+        $context = SerializationContext::create()->setGroups(['getStudent', "status"]);
+        $studentsSerialize = $serializer->serialize($newStudent, 'json', $context);
 
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
@@ -132,7 +146,10 @@ class StudentClassController extends AbstractController
         response: 200,
         description: "La classe a été supprimée",
     )]
-    public function deleteStatus(StudentClass $studentClass, EntityManagerInterface $entityManager): JsonResponse {
+    public function deleteStatus(
+        StudentClass $studentClass,
+        EntityManagerInterface $entityManager): JsonResponse
+    {
         $studentClass->setStatus(false);
         $entityManager->persist($studentClass);
         $entityManager->flush();
