@@ -40,7 +40,7 @@ class ProfessorCRUDController extends AbstractController
         SerializerInterface $serializer,
         TagAwareCacheInterface $cache
     ): JsonResponse {
-        $cache->invalidateTags(["allProfessorsCache"]);
+    
         $idCache = "getAllProfessors";
         $ProfessorsSerialize = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
             $item->tag("allProfessorsCache");
@@ -105,7 +105,8 @@ class ProfessorCRUDController extends AbstractController
         $entityManager->persist($Professor);
         $entityManager->flush();
 
-        $cache->invalidateTags(["allProfessorsCache"]);
+        
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache", "allProfessorsCache"]);
 
         return new JsonResponse([
             'code' => Response::HTTP_CREATED,
@@ -137,7 +138,7 @@ class ProfessorCRUDController extends AbstractController
 
         $context = SerializationContext::create()->setGroups('getProfessor');
         $studentsSerialize = $serializer->serialize($professor, 'json', $context);
-
+        
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
 
@@ -191,7 +192,8 @@ class ProfessorCRUDController extends AbstractController
         $context = SerializationContext::create()->setGroups(['getProfessor', 'status']);
         $studentsSerialize = $serializer->serialize($newStudent, 'json', $context);
 
-        $cache->invalidateTags(["allProfessorsCache"]);
+      
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache", "allProfessorsCache"]);
 
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
@@ -219,7 +221,8 @@ class ProfessorCRUDController extends AbstractController
         $entityManager->persist($professor);
 
         $entityManager->flush();
-        $cache->invalidateTags(["allProfessorsCache"]);
+  
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache", "allProfessorsCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_OK,
             'message' => "The entity is delete"
@@ -248,7 +251,8 @@ class ProfessorCRUDController extends AbstractController
 
         $entityManager->remove($professor);
         $entityManager->flush();
-        $cache->invalidateTags(["allProfessorsCache"]);
+  
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache", "allProfessorsCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_OK,
             'message' => "The entity is delete"

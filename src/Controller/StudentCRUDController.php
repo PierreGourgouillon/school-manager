@@ -124,7 +124,7 @@ class StudentCRUDController extends AbstractController
         $entityManager->persist($student);
         $entityManager->flush();
 
-        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache", "allProfessorsCache"]);
 
         return new JsonResponse([
             'code' => Response::HTTP_CREATED,
@@ -221,7 +221,7 @@ class StudentCRUDController extends AbstractController
         $context = SerializationContext::create()->setGroups(['getStudent', 'status']);
         $studentsSerialize = $serializer->serialize($newStudent, 'json', $context);
         
-        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache", "allProfessorsCache"]);
 
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
@@ -243,7 +243,7 @@ class StudentCRUDController extends AbstractController
 
         $entityManager->flush();
 
-        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache", "allProfessorsCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_OK,
             'message' => "The entity is delete"
@@ -262,12 +262,12 @@ class StudentCRUDController extends AbstractController
     )]
     public function delete(
         Student $student,
-        EntityManagerInterface $entityManager): JsonResponse
+        EntityManagerInterface $entityManager, TagAwareCacheInterface $cache): JsonResponse
     {
         $entityManager->remove($student);
         $entityManager->flush();
 
-        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache", "allProfessorsCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_OK,
             'message' => "The entity is delete"

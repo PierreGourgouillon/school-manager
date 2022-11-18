@@ -167,7 +167,7 @@ class StudentClassController extends AbstractController
         $context = SerializationContext::create()->setGroups(['getStudent', 'status']);
         $studentsSerialize = $serializer->serialize($newStudent, 'json', $context);
 
-        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache", "allProfessorsCache"]);
         return new JsonResponse($studentsSerialize, Response::HTTP_OK, [], true);
     }
 
@@ -193,7 +193,7 @@ class StudentClassController extends AbstractController
         $entityManager->persist($studentClass);
         $entityManager->flush();
 
-        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache"]);
+        $cache->invalidateTags(["allStudentsCache", "allStudentClassCache", "allProfessorsCache"]);
         return new JsonResponse([
             'code' => Response::HTTP_OK,
             'message' => "The student class has been deleted"

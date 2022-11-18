@@ -27,6 +27,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
+    #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
+    private ?Director $director = null;
+
+    #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
+    private ?Professor $professor = null;
+
+    #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
+    private ?Student $student = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -95,5 +104,71 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
+    }
+
+    public function getDirector(): ?Director
+    {
+        return $this->director;
+    }
+
+    public function setDirector(?Director $director): self
+    {
+        // unset the owning side of the relation if necessary
+        if ($director === null && $this->director !== null) {
+            $this->director->setUser(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($director !== null && $director->getUser() !== $this) {
+            $director->setUser($this);
+        }
+
+        $this->director = $director;
+
+        return $this;
+    }
+
+    public function getProfessor(): ?Professor
+    {
+        return $this->professor;
+    }
+
+    public function setProfessor(?Professor $professor): self
+    {
+        // unset the owning side of the relation if necessary
+        if ($professor === null && $this->professor !== null) {
+            $this->professor->setUser(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($professor !== null && $professor->getUser() !== $this) {
+            $professor->setUser($this);
+        }
+
+        $this->professor = $professor;
+
+        return $this;
+    }
+
+    public function getStudent(): ?Student
+    {
+        return $this->student;
+    }
+
+    public function setStudent(?Student $student): self
+    {
+        // unset the owning side of the relation if necessary
+        if ($student === null && $this->student !== null) {
+            $this->student->setUser(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($student !== null && $student->getUser() !== $this) {
+            $student->setUser($this);
+        }
+
+        $this->student = $student;
+
+        return $this;
     }
 }
